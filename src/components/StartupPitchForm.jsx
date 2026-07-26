@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rocket, Lightbulb, Target, Cpu, Send, User, CheckCircle, AlertCircle, TrendingUp, Zap, Shield } from 'lucide-react';
+import { Rocket, Lightbulb, Target, Cpu, Send, User, CheckCircle, AlertCircle, TrendingUp, Zap, Shield, Swords, Building2, Sparkles } from 'lucide-react';
 
 export default function StartupPitchForm() {
   const [formData, setFormData] = useState({
@@ -185,6 +185,68 @@ export default function StartupPitchForm() {
                 <p className="text-gray-300 text-sm leading-relaxed">{result.competitiveAdvantage}</p>
               </div>
             </div>
+
+            {/* Competitor Discovery Agent - Rival Identification */}
+            {result.competitorAgent && (
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-lg font-bold text-white">
+                    <Swords className="w-5 h-5 text-purple-400" />
+                    <span>Competitor Discovery Agent</span>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
+                      Rival Identification
+                    </span>
+                  </div>
+                </div>
+
+                {result.competitorAgent.marketGapSummary && (
+                  <div className="p-4 bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-slate-900/30 border border-purple-500/30 rounded-2xl flex items-start gap-3 shadow-lg">
+                    <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-300">Identified Market Void</h4>
+                      <p className="text-sm text-gray-200 mt-1 leading-relaxed">{result.competitorAgent.marketGapSummary}</p>
+                    </div>
+                  </div>
+                )}
+
+                {result.competitorAgent.rivals?.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {result.competitorAgent.rivals.map((rival, index) => (
+                      <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 hover:border-purple-500/40 transition-all shadow-md">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-purple-400" />
+                            <h3 className="font-bold text-white text-base">{rival.name}</h3>
+                          </div>
+                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                            rival.type?.includes('Direct')
+                              ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {rival.type || 'Competitor'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 text-xs">
+                          <div>
+                            <span className="font-semibold text-gray-400">Key Features: </span>
+                            <span className="text-gray-300">{rival.keyFeatures}</span>
+                          </div>
+                          <div className="bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
+                            <span className="font-semibold text-red-400">Vulnerability: </span>
+                            <span className="text-red-200/90">{rival.vulnerability}</span>
+                          </div>
+                          <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+                            <span className="font-semibold text-emerald-400">Your Edge: </span>
+                            <span className="text-emerald-200/90">{rival.ourDifferentiation}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Sources */}
             {result.sources?.length > 0 && (
