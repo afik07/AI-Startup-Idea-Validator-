@@ -1,119 +1,362 @@
 @import "tailwindcss";
 
 :root {
-  --background: 201 100% 13%;
-  --foreground: 0 0% 100%;
-  --muted-foreground: 240 4% 66%;
-  --primary: 0 0% 100%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 10%;
-  --muted: 0 0% 10%;
-  --accent: 0 0% 10%;
-  --border: 0 0% 18%;
-  --input: 0 0% 18%;
-  --font-display: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-secondary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: var(--font-body);
-    margin: 0;
-    padding: 0;
+    background-color: #f8f9fa;
+    color: #1a1a1a;
+    font-family: var(--font-primary);
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+  h1 {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
 
-  code, pre, .font-mono {
-    font-family: var(--font-mono);
+  h2 {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  h3 {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
-/* Liquid Glass Effect */
-.liquid-glass {
-  background: rgba(255, 255, 255, 0.01);
-  background-blend-mode: luminosity;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  position: relative;
+/* ==========================================================================
+   Inter Typography System Hierarchy
+   - 700: Major headings (H1 36-48px, H2 28-32px)
+   - 600: Section headings / card titles (H3 20-24px)
+   - 500: Buttons, navigation, labels, numbers (14-16px)
+   - 400: Body text (16px), secondary text, captions (12-13px)
+   ========================================================================== */
+
+.inter-h1 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: clamp(2.25rem, 4.5vw, 3rem); /* 36px - 48px */
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: #1a1a1a;
+}
+
+.inter-h2 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 3vw, 2rem); /* 28px - 32px */
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #1a1a1a;
+}
+
+.inter-h3 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 2vw, 1.5rem); /* 20px - 24px */
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+.inter-body {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: 1rem; /* 16px */
+  line-height: 1.5;
+  color: #374151;
+}
+
+.inter-ui {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.4;
+}
+
+.inter-caption {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: 0.75rem; /* 12px - 13px */
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.inter-num {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: 0.9375rem; /* 15px */
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Base Card */
+.gamma-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+/* Hero Section with Inter Typography */
+.viskey-page {
   overflow: hidden;
+  background: #f8f9fa;
+  color: #1a1a1a;
 }
 
-.liquid-glass::before {
-  content: '';
-  position: absolute;
+.viskey-shell {
+  width: min(1280px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.viskey-hero {
+  position: relative;
+  min-height: 668px;
+  background: #f8f9fa;
+  overflow: visible;
+}
+
+.viskey-hero-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 680px) minmax(360px, 1fr);
+  align-items: center;
+  gap: clamp(32px, 7vw, 112px);
+  min-height: 668px;
+  padding: 92px 40px 72px;
+}
+
+@media (max-width: 1024px) {
+  .viskey-hero-shell {
+    grid-template-columns: 1fr;
+    padding: 48px 24px 48px;
+  }
+}
+
+.viskey-hero-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.viskey-hero-composer {
+  width: 100%;
+}
+
+.viskey-hero-title {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: clamp(2.75rem, 5vw, 4.25rem); /* Inter 700: 44px - 68px */
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+  color: #111827;
+}
+
+@media (max-width: 768px) {
+  .viskey-hero-title {
+    font-size: 2.25rem;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+}
+
+.viskey-hero-title span {
+  display: block;
+}
+
+.viskey-hero-subtitle {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: #4b5563;
+}
+
+/* 1:1 Vida Composer with Inter Typography */
+.viskey-composer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  background: #fcfcfcd6;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.035);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.2s ease-in-out;
+}
+
+.viskey-composer:focus-within {
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.06);
+}
+
+.viskey-composer--hero {
+  width: min(680px, 100%);
+  min-height: 140px;
+  margin-top: 0;
+  padding: 14px 16px;
+}
+
+.viskey-composer-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 4px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #1a1a1a;
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+}
+
+.viskey-composer-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.viskey-composer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.viskey-composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.viskey-chip-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.viskey-icon-button,
+.viskey-send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: transparent;
+  color: #1a1a1a;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.viskey-icon-button:hover,
+.viskey-send-button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.viskey-send-button {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.viskey-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.viskey-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: transparent;
+  color: #4b5563;
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.viskey-chip:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111827;
+}
+
+/* Background Ring */
+.viskey-hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(492px, 100%);
+  aspect-ratio: 1;
+  justify-self: end;
+}
+
+.viskey-hero-ring--outer {
   inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
-  background: linear-gradient(180deg,
-    rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
-    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
-    rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  position: absolute;
+  display: block;
+  background: url("data:image/svg+xml,%3csvg%20width='492'%20height='491'%20viewBox='0%200%20492%20491'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M246%20111.5C320.284%20111.5%20380.5%20171.496%20380.5%20245.5C380.5%20319.504%20320.284%20379.5%20246%20379.5C171.716%20379.5%20111.5%20319.504%20111.5%20245.5C111.5%20171.496%20171.716%20111.5%20246%20111.5Z'%20stroke='black'%20stroke-opacity='0.06'/%3e%3cpath%20d='M246%200.5C381.587%200.5%20491.5%20110.191%20491.5%20245.5C491.5%20380.809%20381.587%20490.5%20246%20490.5C110.413%20490.5%200.5%20380.809%200.5%20245.5C0.5%20110.191%20110.413%200.5%20246%200.5Z'%20stroke='url(%23paint0_linear_12486_28424)'%20stroke-opacity='0.06'/%3e%3cdefs%3e%3clinearGradient%20id='paint0_linear_12486_28424'%20x1='246'%20y1='169'%20x2='246'%20y2='491'%20gradientUnits='userSpaceOnUse'%3e%3cstop/%3e%3cstop%20offset='1'%20stop-color='%23666666'%20stop-opacity='0'/%3e%3c/linearGradient%3e%3c/defs%3e%3c/svg%3e") center / contain no-repeat;
   pointer-events: none;
 }
 
-/* Pitch Card System matching reference screenshot */
-.pitch-card {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+/* 1440x732 Video Overlay Layer */
+.viskey-hero-media {
+  position: absolute;
+  z-index: 1;
+  top: -64px;
+  left: 50%;
+  width: min(1440px, 100vw);
+  aspect-ratio: 1440 / 732;
+  transform: translate(-50%);
+  pointer-events: none;
 }
 
-.pitch-input {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.25s ease;
-}
-
-.pitch-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-  background: rgba(15, 23, 42, 0.98);
-}
-
-/* Glassmorphism Card System */
-.glass-card-glow {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.15);
-}
-
-/* Keyframe Animations */
-@keyframes fade-rise {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-rise {
-  animation: fade-rise 0.8s ease-out both;
-}
-
-.animate-fade-rise-delay {
-  animation: fade-rise 0.8s ease-out 0.2s both;
-}
-
-.animate-fade-rise-delay-2 {
-  animation: fade-rise 0.8s ease-out 0.4s both;
+.viskey-hero-media-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* Custom Scrollbar */
@@ -121,16 +364,13 @@
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #001e36;
+  background: #f1f5f9;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #1e3a5f;
-  border-radius: 9999px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #2d5485;
+  background: #94a3b8;
 }

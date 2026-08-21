@@ -1,5 +1,5 @@
 // Agent 4: Comparison & Strategy Agent (Rival Comparison Matrix & Final Validation Scorecard)
-import { callOpenRouter } from "./openRouterClient";
+import { callOpenRouter } from "./openRouterClient.js";
 
 export async function runComparisonAgent({ idea, marketData, customerData, competitorData, options, logCallback }) {
   logCallback("Synthesizing full competitive comparison matrix, market gaps, and calculating overall Validation Scorecard...");

@@ -1,6 +1,6 @@
 // Agent 3: Competitor Discovery Agent (Rivals Search & Tavily Web Search Integration)
-import { searchTavily } from "./tavilyClient";
-import { callOpenRouter } from "./openRouterClient";
+import { searchTavily } from "./tavilyClient.js";
+import { callOpenRouter } from "./openRouterClient.js";
 
 export async function runCompetitorDiscoveryAgent({ idea, marketData, customerData, options, logCallback }) {
   logCallback(`Executing Tavily web search for live competitor offerings in ${marketData.industryName}...`);

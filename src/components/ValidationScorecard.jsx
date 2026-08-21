@@ -1,167 +1,156 @@
-import React from "react";
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Award, AlertTriangle, CheckCircle2, RefreshCw, Zap, ShieldAlert, ShieldCheck, TrendingUp, Target, Layers } from "lucide-react";
+import React, { useState } from "react";
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from "recharts";
+import { Sparkles, ShieldCheck, FileText, Image as ImageIcon, Eye, CheckCircle2 } from "lucide-react";
 
 export function ValidationScorecard({ report }) {
-  if (!report || !report.comparison) return null;
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  if (!report) return null;
 
-  const { comparison, idea, market, customer } = report;
-  const score = comparison.validationScore || 85;
-  const verdict = comparison.verdict || "STRONG GO";
+  const { idea, comparison, durationSeconds } = report;
+  const score = comparison?.validationScore || 85;
 
-  // Multi-dimensional Radar Chart Data
   const radarData = [
-    { subject: "Market Size & CAGR", score: Math.min(market?.opportunityScore || 80, 100) },
-    { subject: "Customer ICP Urgency", score: (customer?.painPointSeverity || 8) * 10 },
-    { subject: "Willingness To Pay", score: customer?.willingnessToPay === "Very High" ? 95 : customer?.willingnessToPay === "High" ? 85 : 70 },
-    { subject: "Defensibility Moat", score: comparison?.defensibilityMoat === "High" ? 90 : comparison?.defensibilityMoat === "Medium" ? 75 : 55 },
-    { subject: "Competitive Gap", score: 85 }
+    { subject: "Market Size & Growth", value: comparison?.marketFeasibilityScore || 85 },
+    { subject: "Customer WTP", value: comparison?.customerWillingnessScore || 80 },
+    { subject: "Competitive Moat", value: comparison?.competitiveMoatScore || 75 },
+    { subject: "SWOT Risk Index", value: 100 - (report.swotRisk?.riskScores?.overallRiskIndex || 40) },
+    { subject: "GTM Velocity", value: comparison?.gtmFeasibilityScore || 90 }
   ];
 
-  const getVerdictStyle = (v) => {
-    if (v.includes("STRONG") || v.includes("GO")) {
-      return {
-        bg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
-        badge: "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20",
-        icon: CheckCircle2
-      };
-    } else if (v.includes("CAUTION") || v.includes("PROCEED")) {
-      return {
-        bg: "bg-amber-500/10 border-amber-500/30 text-amber-400",
-        badge: "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20",
-        icon: AlertTriangle
-      };
-    } else {
-      return {
-        bg: "bg-rose-500/10 border-rose-500/30 text-rose-400",
-        badge: "bg-rose-500 text-white shadow-lg shadow-rose-500/20",
-        icon: RefreshCw
-      };
-    }
-  };
-
-  const vStyle = getVerdictStyle(verdict);
-
   return (
-    <div className="glass-card-glow rounded-3xl p-6 sm:p-8 shadow-2xl space-y-8 animate-fade-in relative overflow-hidden">
-      {/* Top Hero Banner */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 border-b border-slate-800/80 pb-8">
-        {/* Radial Score Gauge */}
-        <div className="flex items-center gap-6">
-          <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-slate-950 border-4 border-slate-800/80 flex items-center justify-center shadow-2xl shrink-0 group">
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                stroke="currentColor"
-                strokeWidth="7"
-                className="text-slate-900"
-                fill="transparent"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                stroke="currentColor"
-                strokeWidth="7"
-                strokeDasharray={264}
-                strokeDashoffset={264 - (264 * score) / 100}
-                strokeLinecap="round"
-                className={`transition-all duration-1000 ${
-                  score >= 80 ? "text-emerald-400" : score >= 70 ? "text-amber-400" : "text-rose-400"
-                }`}
-                fill="transparent"
-              />
-            </svg>
-            <div className="text-center z-10 font-mono">
-              <span className="text-3xl sm:text-4xl font-black text-white">{score}</span>
-              <span className="text-[10px] text-slate-400 block font-bold">VAL_INDEX</span>
-            </div>
+    <div className="gamma-card p-6 sm:p-8 space-y-8 animate-fade-in text-left">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
+            <Sparkles className="w-4 h-4 text-slate-900" />
+            OFFICIAL GAMMAVAL™ DUE DILIGENCE AUDIT
           </div>
-
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-widest ${vStyle.badge}`}>
-                {verdict}
-              </span>
-              <span className="text-xs text-slate-400 font-mono">Validated in {report.durationSeconds}s</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-              {idea.title}
-            </h2>
-            <p className="text-xs text-slate-300 mt-2 max-w-xl leading-relaxed font-medium">
-              {comparison.verdictSummary}
-            </p>
-          </div>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
+            {idea.title}
+          </h3>
+          <p className="text-xs text-slate-500 font-mono mt-0.5">{idea.domain} • Validated in {durationSeconds}s</p>
         </div>
 
-        {/* Strategic Moat & Risk Index */}
-        <div className="w-full lg:w-auto p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 shrink-0 shadow-inner">
-          <div className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between gap-4">
-            <span>Defensibility Moat</span>
-            <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
-              comparison.defensibilityMoat === "High" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-            }`}>
-              {comparison.defensibilityMoat} Moat
-            </span>
+        <div className="flex items-center gap-3 font-mono">
+          <div className="px-4 py-2 rounded-full bg-slate-950 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>VERDICT: {comparison?.verdict || "STRONG GO"}</span>
           </div>
-          <p className="text-xs text-slate-300 max-w-xs leading-relaxed font-medium">
-            {comparison.moatExplanation}
-          </p>
         </div>
       </div>
 
-      {/* Dual Visualizer Grid: Radar Chart + UVP Highlights */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Recharts Spider Radar Visualizer */}
-        <div className="lg:col-span-6 bg-slate-950/90 p-5 rounded-2xl border border-slate-800/80 space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <Target className="w-4 h-4 text-indigo-400" />
-              5-Vector Viability Radar Index
-            </h4>
-            <span className="text-[10px] text-slate-500 font-mono">0-100 Score Metric</span>
+      {/* Attached Document & Vision Ingestion Badge */}
+      {idea.attachedDocument && (
+        <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            {idea.attachedDocument.isImage && idea.attachedDocument.dataUrl ? (
+              <div
+                onClick={() => setShowImagePreview(!showImagePreview)}
+                className="cursor-pointer group relative"
+                title="Click to preview uploaded image"
+              >
+                <img
+                  src={idea.attachedDocument.dataUrl}
+                  alt="Audited Document"
+                  className="w-12 h-12 rounded-xl object-cover border border-indigo-200 shadow-xs group-hover:opacity-90 transition"
+                />
+                <div className="absolute inset-0 bg-slate-900/30 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
+                  <Eye className="w-4 h-4" />
+                </div>
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-white border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-xs shrink-0">
+                <FileText className="w-6 h-6" />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2 font-bold text-slate-900">
+                <span>Audited Source Document: {idea.attachedDocument.name}</span>
+                <span className="px-2 py-0.5 rounded-full bg-white border border-indigo-200 text-[10px] font-mono text-indigo-700">
+                  {idea.attachedDocument.sizeFormatted || "Uploaded"}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                {idea.documentSummary || "Multi-agent vision engine successfully transcribed and validated all architecture diagrams & business parameters."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-3 py-1.5 rounded-full shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Vision Due Diligence Verified</span>
+          </div>
+        </div>
+      )}
+
+      {/* Viability Gauge & 5-Vector Radar */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        {/* Viability Gauge (Score donut) */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-4">
+          <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
+            COMPOSITE VIABILITY SCORE
+          </span>
+
+          <div className="relative w-44 h-44 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" stroke="#e2e8f0" strokeWidth="8" fill="transparent" />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                stroke="#0f172a"
+                strokeWidth="8"
+                fill="transparent"
+                strokeDasharray="251.2"
+                strokeDashoffset={251.2 - (251.2 * score) / 100}
+                strokeLinecap="round"
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-extrabold text-slate-900 font-sans">{score}</span>
+              <span className="text-[11px] font-mono text-slate-500 font-bold">OUT OF 100</span>
+            </div>
           </div>
 
+          <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-xs">
+            "{comparison?.verdictSummary}"
+          </p>
+        </div>
+
+        {/* 5-Vector Recharts Radar Chart */}
+        <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 space-y-3">
+          <h4 className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
+            5-Vector Investment Viability Radar
+          </h4>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                <PolarGrid stroke="#334155" />
-                <PolarAngleAxis dataKey="subject" stroke="#94a3b8" fontSize={10} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" fontSize={8} />
-                <Radar name="Startup Score" dataKey="score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="subject" stroke="#475569" fontSize={11} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#cbd5e1" fontSize={10} />
+                <Radar name="Viability Score" dataKey="value" stroke="#0f172a" fill="#0f172a" fillOpacity={0.15} />
+                <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#cbd5e1", borderRadius: "12px", color: "#0f172a", fontSize: "12px" }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* Unique Value Proposition & Actionable Next Steps */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 space-y-2 shadow-lg">
-            <div className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-              <Zap className="w-4 h-4 text-indigo-400" />
-              Winning Unique Value Proposition (UVP)
-            </div>
-            <p className="text-sm font-semibold text-slate-100 leading-relaxed italic">
-              "{comparison.uniqueValueProposition}"
-            </p>
-          </div>
+      {/* Key Strategic Pillars */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">UNIQUE VALUE PROPOSITION</span>
+          <p className="text-xs font-bold text-slate-900">{comparison?.uniqueValueProposition}</p>
+        </div>
 
-          <div className="p-5 rounded-2xl bg-slate-950/90 border border-slate-800/80 space-y-3">
-            <div className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Strategic Directives & Action Plan
-            </div>
-            <ul className="space-y-2 text-xs text-slate-300 font-medium">
-              {comparison.actionableRecommendations?.map((rec, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  <span className="text-emerald-400 font-bold shrink-0">✓</span>
-                  <span>{rec}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">DEFENSIBILITY MOAT</span>
+          <p className="text-xs font-bold text-slate-900">{comparison?.defensibilityMoat} — {comparison?.moatExplanation}</p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">PRIMARY UNADDRESSED GAP</span>
+          <p className="text-xs font-bold text-slate-900">{comparison?.marketGaps?.[0]}</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 // Agent 2: Customer Segmentation Agent (Consumer & ICP Evaluation)
-import { callOpenRouter } from "./openRouterClient";
+import { callOpenRouter } from "./openRouterClient.js";
 
 export async function runCustomerSegmentationAgent({ idea, marketData, options, logCallback }) {
   logCallback("Defining Ideal Customer Profiles (ICPs) and analyzing target segment behavior...");

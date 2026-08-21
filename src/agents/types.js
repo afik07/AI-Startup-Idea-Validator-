@@ -1,4 +1,4 @@
-// Data Models, Presets and Constants for AI Startup Idea Validator
+// Data Models, Presets and Constants for GammaVal™ AI Startup Idea Validator
 
 export const SAMPLE_PRESETS = [
   {
@@ -50,5 +50,8 @@ export const AGENT_STEPS = {
   MARKET: "market_opportunity",
   CUSTOMER: "customer_segmentation",
   COMPETITOR: "competitor_discovery",
-  COMPARISON: "comparison_strategy"
+  COMPARISON: "comparison_strategy",
+  SWOT_RISK: "swot_risk",
+  MVP: "mvp_recommendation",
+  GTM: "gtm_strategy"
 };

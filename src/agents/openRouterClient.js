@@ -1,4 +1,4 @@
-// OpenRouter API Gateway Client with dynamic fallback generator
+// OpenRouter API Gateway Client with multimodal document/image support and dynamic fallback generator
 
 export async function callOpenRouter({ apiKey, model = "google/gemini-2.0-flash-001", prompt, systemPrompt, fallbackFn }) {
   if (!apiKey || apiKey.trim() === "") {
@@ -12,19 +12,23 @@ export async function callOpenRouter({ apiKey, model = "google/gemini-2.0-flash-
   }
 
   try {
+    const userContent = typeof prompt === "string" 
+      ? prompt 
+      : prompt; // Array of { type: "text", text: ... } and { type: "image_url", image_url: { url: ... } }
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey.trim()}`,
         "Content-Type": "application/json",
         "HTTP-Referer": window.location.href || "http://localhost:5173",
-        "X-Title": "AI Startup Idea Validator"
+        "X-Title": "GammaVal AI Startup Validator"
       },
       body: JSON.stringify({
         model: model,
         messages: [
           { role: "system", content: systemPrompt + "\nIMPORTANT: Output ONLY valid JSON without markdown formatting or code blocks." },
-          { role: "user", content: prompt }
+          { role: "user", content: userContent }
         ],
         temperature: 0.4,
         response_format: { type: "json_object" }

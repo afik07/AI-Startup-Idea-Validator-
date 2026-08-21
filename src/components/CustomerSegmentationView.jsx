@@ -1,76 +1,65 @@
 import React from "react";
-import { Users, Target, Flame, DollarSign, Megaphone, UserCheck } from "lucide-react";
+import { Users, User } from "lucide-react";
 
 export function CustomerSegmentationView({ customer }) {
   if (!customer) return null;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+    <div className="gamma-card p-6 sm:p-8 space-y-8 animate-fade-in text-left">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 uppercase tracking-wider">
-            <Users className="w-4 h-4" />
-            Customer Segmentation Agent Evaluation
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
+            <Users className="w-4 h-4 text-slate-900" />
+            CUSTOMER SEGMENTATION & ICP AGENT
           </div>
-          <h3 className="text-xl font-bold text-white mt-1">Target Customer Segments & ICP</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 tracking-tight">
+            Target Customer Profile & Buyer Personas
+          </h3>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-300 flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-rose-400" />
+        <div className="flex items-center gap-3 font-mono">
+          <div className="px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800">
             Pain Severity: {customer.painPointSeverity}/10
           </div>
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-            <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-            WTP: {customer.willingnessToPay}
-          </div>
         </div>
       </div>
 
-      {/* ICP Summary Card */}
-      <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-        <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-          <Target className="w-4 h-4 text-indigo-400" />
-          Primary Ideal Customer Profile (ICP)
-        </div>
-        <p className="text-sm text-slate-200 leading-relaxed font-medium">
+      {/* ICP Summary Banner */}
+      <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest block">
+          PRIMARY IDEAL CUSTOMER PROFILE (ICP)
+        </span>
+        <p className="text-sm font-bold text-slate-900 leading-relaxed">
           {customer.icpSummary}
         </p>
-        <div className="text-xs text-slate-400 pt-1 flex items-center gap-2">
-          <span>Estimated ARPU:</span>
-          <span className="font-mono font-bold text-emerald-400">{customer.estimatedArpu}</span>
-        </div>
       </div>
 
-      {/* Persona Cards */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <UserCheck className="w-4 h-4 text-purple-400" />
-          Target Buyer Personas
+      {/* Persona Cards Grid */}
+      <div className="space-y-4">
+        <h4 className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
+          Detailed Buyer Persona Breakdown
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {customer.personas?.map((persona, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 hover:border-slate-700 transition">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-white">{persona.role}</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
-                  Persona 0{i + 1}
+          {customer.personas?.map((persona, idx) => (
+            <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-slate-900" />
+                  <span className="font-extrabold text-slate-900 text-sm">{persona.roleTitle}</span>
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                  {persona.demographics}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 italic">"{persona.demographics}"</p>
 
-              <div className="space-y-2 text-xs pt-1 border-t border-slate-900">
+              <div className="space-y-2 text-xs text-slate-700 font-medium">
                 <div>
-                  <span className="font-bold text-rose-400 block mb-0.5">Core Pain Point:</span>
-                  <span className="text-slate-300">{persona.corePainPoint}</span>
+                  <strong className="text-slate-900 font-extrabold block">Core Operational Pain Point:</strong>
+                  <p className="text-slate-600 text-xs leading-relaxed">{persona.corePainPoint}</p>
                 </div>
                 <div>
-                  <span className="font-bold text-slate-400 block mb-0.5">Current Workaround:</span>
-                  <span className="text-slate-300">{persona.currentWorkaround}</span>
-                </div>
-                <div>
-                  <span className="font-bold text-emerald-400 block mb-0.5">Buying Trigger:</span>
-                  <span className="text-slate-300">{persona.buyingTrigger}</span>
+                  <strong className="text-slate-900 font-extrabold block">Current Workaround:</strong>
+                  <p className="text-slate-600 text-xs leading-relaxed">{persona.currentWorkaround}</p>
                 </div>
               </div>
             </div>
@@ -78,18 +67,27 @@ export function CustomerSegmentationView({ customer }) {
         </div>
       </div>
 
-      {/* Acquisition Channels */}
-      <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-          <Megaphone className="w-4 h-4 text-emerald-400" />
-          Recommended Go-To-Market (GTM) Channels
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {customer.acquisitionChannels?.map((ch, i) => (
-            <span key={i} className="px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 font-medium">
-              🎯 {ch}
-            </span>
-          ))}
+      {/* WTP & Channels Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest block">
+            Willingness To Pay (WTP) & ARPU Rating
+          </span>
+          <div className="text-lg font-bold text-slate-900">{customer.willingnessToPay}</div>
+          <p className="text-xs text-slate-600 font-medium">Estimated ARPU: {customer.estimatedArpu}</p>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest block">
+            Primary Acquisition Channels
+          </span>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {customer.acquisitionChannels?.map((ch, i) => (
+              <span key={i} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800">
+                {ch}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>

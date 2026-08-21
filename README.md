@@ -1,16 +1,20 @@
-# React + Vite
+# GammaVal™ AI — Multi-Agent Startup Idea Validator
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+GammaVal™ AI is an enterprise-grade Multi-Agent System (MAS) platform engineered to perform automated venture capital due diligence on startup concepts.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **7-Agent Sequential Pipeline**: Market Opportunity, Customer ICP, Tavily Competitor Discovery, Strategic Comparison Matrix, SWOT & Risk Analysis, MoSCoW MVP Feature Recommendation, and Go-To-Market Strategy.
+- **Conversational AI Advisor**: Context-aware chatbot ingesting the full Knowledge Base (KB) output for interactive follow-up strategy questions.
+- **Live Web Competitor Discovery**: Integrates Tavily API for real-time web search rival discovery and pricing models.
+- **Multi-Model LLM Gateway**: Supports Gemini 2.0 Flash, Claude 3.5 Sonnet, GPT-4o Mini, and Llama 3.3.
+- **Viskey & Vida Inspired SOTA Light UI**: Animated 3D mascot doll, floating prompt console, quick action chips, and pristine white card dashboards.
 
-## React Compiler
+## 💻 Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Open `http://localhost:5173/` in your browser.

@@ -1,5 +1,5 @@
 // Agent 1: Market Opportunity Agent (Industry & Addressable Market Evaluation)
-import { callOpenRouter } from "./openRouterClient";
+import { callOpenRouter } from "./openRouterClient.js";
 
 export async function runMarketOpportunityAgent({ idea, options, logCallback }) {
   logCallback("Evaluating global & regional industry metrics (TAM, SAM, SOM)...");

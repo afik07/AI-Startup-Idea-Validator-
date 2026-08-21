@@ -1,9 +1,12 @@
-// Multi-Agent Pipeline Orchestrator
-import { runMarketOpportunityAgent } from "./marketOpportunityAgent";
-import { runCustomerSegmentationAgent } from "./customerSegmentationAgent";
-import { runCompetitorDiscoveryAgent } from "./competitorDiscoveryAgent";
-import { runComparisonAgent } from "./comparisonAgent";
-import { AGENT_STEPS } from "./types";
+// Multi-Agent Pipeline Orchestrator (Milestone 1, 2 & 3)
+import { runMarketOpportunityAgent } from "./marketOpportunityAgent.js";
+import { runCustomerSegmentationAgent } from "./customerSegmentationAgent.js";
+import { runCompetitorDiscoveryAgent } from "./competitorDiscoveryAgent.js";
+import { runComparisonAgent } from "./comparisonAgent.js";
+import { runSwotRiskAgent } from "./swotRiskAgent.js";
+import { runMvpRecommendationAgent } from "./mvpRecommendationAgent.js";
+import { runGtmStrategyAgent } from "./gtmStrategyAgent.js";
+import { AGENT_STEPS } from "./types.js";
 
 export class AgentOrchestrator {
   constructor(options = {}) {
@@ -39,6 +42,9 @@ export class AgentOrchestrator {
       customerData: null,
       competitorData: null,
       comparisonData: null,
+      swotRiskData: null,
+      mvpData: null,
+      gtmData: null,
       logs: []
     };
 
@@ -99,6 +105,43 @@ export class AgentOrchestrator {
       });
       this.emit("agent_status", { step: AGENT_STEPS.COMPARISON, status: "completed", data: context.comparisonData });
 
+      // Step 5: SWOT & Risk Analysis Agent (Milestone 3)
+      this.emit("agent_status", { step: AGENT_STEPS.SWOT_RISK, status: "running" });
+      addLog(AGENT_STEPS.SWOT_RISK, "Starting SWOT & Risk Analysis Agent evaluation...");
+      context.swotRiskData = await runSwotRiskAgent({
+        idea,
+        marketData: context.marketData,
+        customerData: context.customerData,
+        competitorData: context.competitorData,
+        options: this.options,
+        logCallback: (msg) => addLog(AGENT_STEPS.SWOT_RISK, msg)
+      });
+      this.emit("agent_status", { step: AGENT_STEPS.SWOT_RISK, status: "completed", data: context.swotRiskData });
+
+      // Step 6: MVP Feature Recommendation Agent (MoSCoW) (Milestone 3)
+      this.emit("agent_status", { step: AGENT_STEPS.MVP, status: "running" });
+      addLog(AGENT_STEPS.MVP, "Starting MVP MoSCoW Feature Recommendation Agent...");
+      context.mvpData = await runMvpRecommendationAgent({
+        idea,
+        customerData: context.customerData,
+        competitorData: context.competitorData,
+        options: this.options,
+        logCallback: (msg) => addLog(AGENT_STEPS.MVP, msg)
+      });
+      this.emit("agent_status", { step: AGENT_STEPS.MVP, status: "completed", data: context.mvpData });
+
+      // Step 7: Go-To-Market (GTM) Strategy Agent (Milestone 3)
+      this.emit("agent_status", { step: AGENT_STEPS.GTM, status: "running" });
+      addLog(AGENT_STEPS.GTM, "Starting Go-To-Market Strategy Agent roadmap generation...");
+      context.gtmData = await runGtmStrategyAgent({
+        idea,
+        customerData: context.customerData,
+        competitorData: context.competitorData,
+        options: this.options,
+        logCallback: (msg) => addLog(AGENT_STEPS.GTM, msg)
+      });
+      this.emit("agent_status", { step: AGENT_STEPS.GTM, status: "completed", data: context.gtmData });
+
       const durationMs = Date.now() - startTime;
       const finalReport = {
         idea,
@@ -106,6 +149,9 @@ export class AgentOrchestrator {
         customer: context.customerData,
         competitors: context.competitorData,
         comparison: context.comparisonData,
+        swotRisk: context.swotRiskData,
+        mvp: context.mvpData,
+        gtm: context.gtmData,
         logs: context.logs,
         durationSeconds: (durationMs / 1000).toFixed(1),
         completedAt: new Date().toLocaleString()
