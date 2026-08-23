@@ -3,7 +3,7 @@ import { CheckCircle2, Loader2, Circle, Terminal, Search, Users, TrendingUp, Bar
 import { AGENT_STEPS } from "../agents/types";
 
 export function PipelineStepper({ stepStatuses = {}, logs = [], currentStep }) {
-  const terminalBottomRef = useRef(null);
+  const terminalContainerRef = useRef(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const stepsConfig = [
@@ -105,9 +105,11 @@ export function PipelineStepper({ stepStatuses = {}, logs = [], currentStep }) {
     }
   ];
 
-  // Auto-scroll terminal log as events arrive
+  // Auto-scroll inside terminal log container ONLY (never moves the browser window)
   useEffect(() => {
-    terminalBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (terminalContainerRef.current) {
+      terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
   // Elapsed timer ticker
@@ -279,7 +281,10 @@ export function PipelineStepper({ stepStatuses = {}, logs = [], currentStep }) {
           </span>
         </div>
 
-        <div className="h-44 overflow-y-auto rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[11px] space-y-2 text-slate-300 scrollbar-thin shadow-inner">
+        <div
+          ref={terminalContainerRef}
+          className="h-44 overflow-y-auto rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[11px] space-y-2 text-slate-300 scrollbar-thin shadow-inner"
+        >
           {logs.length === 0 ? (
             <div className="text-slate-500 text-center py-10 flex flex-col items-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
@@ -299,7 +304,6 @@ export function PipelineStepper({ stepStatuses = {}, logs = [], currentStep }) {
               </div>
             ))
           )}
-          <div ref={terminalBottomRef} />
         </div>
       </div>
     </div>

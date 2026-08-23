@@ -219,12 +219,6 @@ export default function App() {
           [AGENT_STEPS.ADVISOR]: "completed"
         });
 
-        setTimeout(() => {
-          if (resultsRef.current) {
-            resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 300);
-
         if (data.comparison?.validationScore >= 75) {
           confetti({
             particleCount: 80,

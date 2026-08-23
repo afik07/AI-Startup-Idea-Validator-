@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Eye, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export function InteractiveMascotEyes({ report }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+
   const [speechBubble, setSpeechBubble] = useState(null);
   const [clickCount, setClickCount] = useState(0);
 
@@ -21,7 +21,7 @@ export function InteractiveMascotEyes({ report }) {
     `Defensibility moat looks strong! Keep building! 🛡️`
   ];
 
-  // Eye tracking & canvas rendering engine
+  // 1:1 Canvas pupil tracking engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -37,13 +37,13 @@ export function InteractiveMascotEyes({ report }) {
     };
     window.addEventListener("pointermove", handlePointerMove);
 
-    // Periodic natural blinking (every 3.5s - 5s)
+    // Periodic natural blinking
     let blinkTimer;
     const scheduleNextBlink = () => {
       blinkTimer = setTimeout(() => {
         isBlinking = true;
         blinkProgress = 0;
-      }, 3500 + Math.random() * 2000);
+      }, 3800 + Math.random() * 2000);
     };
     scheduleNextBlink();
 
@@ -56,17 +56,17 @@ export function InteractiveMascotEyes({ report }) {
         return;
       }
 
-      // Base eye coordinates on the 2880 x 1264 canvas (scaled to actual dimensions)
-      // Matching Vida's exact facial eye placement:
-      // Left eye: (1400, 930), Right eye: (1520, 930), radius ~ 42px
-      const leftEyeBase = { x: 1395, y: 940, radius: 46 };
-      const rightEyeBase = { x: 1525, y: 940, radius: 46 };
+      // Exact pixel centers of the white eyeball spheres on the 3D bunny body (2880 x 1264 space)
+      // Left eye: (1400, 1234), socket radius: 42px, pupil radius: 17.5px (Confirmed Perfect!)
+      // Right eye: (1502, 1220), socket radius: 43px, pupil radius: 17.5px (Shifted further left)
+      const eyes = [
+        { x: 1400, y: 1234, radius: 42, pupilRadius: 17.5, maxOffset: 11 },
+        { x: 1502, y: 1220, radius: 43, pupilRadius: 17.5, maxOffset: 11 }
+      ];
 
-      const eyes = [leftEyeBase, rightEyeBase];
-
-      // Handle blink interpolation
+      // Blink animation
       if (isBlinking) {
-        blinkProgress += 0.12;
+        blinkProgress += 0.16;
         if (blinkProgress >= 1) {
           isBlinking = false;
           blinkProgress = 0;
@@ -74,10 +74,10 @@ export function InteractiveMascotEyes({ report }) {
         }
       }
 
-      const blinkScale = isBlinking ? Math.max(0.08, 1 - Math.sin(blinkProgress * Math.PI) * 0.92) : 1;
+      const blinkScale = isBlinking ? Math.max(0.05, 1 - Math.sin(blinkProgress * Math.PI) * 0.95) : 1;
 
       eyes.forEach((eye) => {
-        // Calculate screen coordinates of eye center
+        // Screen coordinates of the eye center
         const screenEyeX = canvasRect.left + (eye.x / canvas.width) * canvasRect.width;
         const screenEyeY = canvasRect.top + (eye.y / canvas.height) * canvasRect.height;
 
@@ -86,51 +86,51 @@ export function InteractiveMascotEyes({ report }) {
         const angle = Math.atan2(deltaY, deltaX);
         const distance = Math.hypot(deltaX, deltaY);
 
-        // Pupil offset calculation
-        const maxOffset = 18;
-        const offset = Math.min(maxOffset, distance / 24);
+        // Smooth offset strictly contained in socket
+        const offset = Math.min(eye.maxOffset, distance / 35);
         const pupilX = eye.x + Math.cos(angle) * offset;
         const pupilY = eye.y + Math.sin(angle) * offset;
 
-        // 1. Draw Sclera (White of the eye)
         ctx.save();
         ctx.translate(eye.x, eye.y);
         ctx.scale(1, blinkScale);
         ctx.translate(-eye.x, -eye.y);
 
-        ctx.beginPath();
-        ctx.arc(eye.x, eye.y, eye.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = "#0d0f12";
-        ctx.stroke();
-
-        // 2. Draw Pupil (Deep Black / Indigo) with clipping to stay inside sclera
+        // Strict circular clip inside the 3D white sphere boundary
         ctx.save();
         ctx.beginPath();
-        ctx.arc(eye.x, eye.y, eye.radius - 2, 0, Math.PI * 2);
+        ctx.arc(eye.x, eye.y, eye.radius - 3, 0, Math.PI * 2);
         ctx.clip();
 
+        // 1. Black Eyeball Pupil
         ctx.beginPath();
-        const pupilRadius = 24;
-        ctx.arc(pupilX, pupilY, pupilRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "#0f172a";
+        ctx.arc(pupilX, pupilY, eye.pupilRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "#08090c";
         ctx.fill();
 
-        // 3. Primary Specular Catchlight (Gleam in the eye)
+        // 2. Primary White Specular Gleam
         ctx.beginPath();
-        ctx.arc(pupilX - 7, pupilY - 7, 7, 0, Math.PI * 2);
+        ctx.arc(pupilX - 4.5, pupilY - 4.5, 4.5, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
         ctx.fill();
 
-        // 4. Secondary Soft Specular Catchlight
+        // 3. Secondary Soft Specular Catchlight
         ctx.beginPath();
-        ctx.arc(pupilX + 7, pupilY + 6, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.arc(pupilX + 4.5, pupilY + 4, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
         ctx.fill();
 
         ctx.restore();
+
+        // Eyelid line during blink
+        if (isBlinking && blinkScale < 0.4) {
+          ctx.beginPath();
+          ctx.arc(eye.x, eye.y, eye.radius, 0, Math.PI);
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = "#101216";
+          ctx.stroke();
+        }
+
         ctx.restore();
       });
 
@@ -159,92 +159,51 @@ export function InteractiveMascotEyes({ report }) {
   return (
     <div
       ref={containerRef}
-      className="w-full flex flex-col items-center justify-end relative pt-8 pb-0 overflow-hidden select-none"
+      className="w-full flex flex-col items-center justify-end relative pt-0 pb-0 -mt-6 sm:-mt-10 select-none"
     >
       {/* Speech / Thought Bubble */}
       {speechBubble && (
-        <div className="mb-3 px-4 py-2 rounded-2xl bg-slate-950 text-white text-xs font-bold shadow-2xl border border-slate-700 animate-bounce flex items-center gap-2 z-30 max-w-sm text-center">
+        <div className="mb-2 px-4 py-2 rounded-2xl bg-slate-950 text-white text-xs font-bold shadow-2xl border border-slate-700 animate-bounce flex items-center gap-2 z-30 max-w-sm text-center">
           <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0 animate-spin" />
           <span>{speechBubble}</span>
         </div>
       )}
 
-      {/* Mascot Stage Container (Vida Style) */}
+      {/* Mascot Stage Container */}
       <div
         onClick={handleMascotClick}
-        className="relative w-full max-w-2xl h-56 sm:h-72 flex items-end justify-center cursor-pointer group select-none overflow-hidden"
-        title="Click me to chat!"
+        className="relative w-full max-w-xl h-60 sm:h-68 flex items-end justify-center cursor-pointer select-none group overflow-hidden"
+        title="Click me!"
       >
-        {/* Video Body Layer (Alpha-transparent HEVC / QuickTime with fallback) */}
-        <video
-          ref={videoRef}
-          className="absolute bottom-0 w-full max-w-md h-full object-contain pointer-events-none z-10"
-          muted
-          loop
-          playsInline
-          autoPlay
-          preload="auto"
-          onLoadedData={() => setVideoLoaded(true)}
-          src="https://vida-web-assets.einsia.com/_astro/bunny-body-hevc-alpha.Cl1HdgWc.mov"
-        />
+        {/* Soft Ambient Floor Shadow */}
+        <div className="absolute bottom-0 w-72 h-5 bg-slate-950/20 rounded-full blur-xl -z-10"></div>
 
-        {/* High-Fidelity SVG Fallback Body (Renders instantly and ensures zero blank canvas) */}
-        <svg
-          viewBox="0 0 600 400"
-          className={`absolute bottom-0 w-full max-w-md h-full object-contain pointer-events-none transition-opacity duration-500 z-0 ${
-            videoLoaded ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <defs>
-            <radialGradient id="bunnyFur" cx="50%" cy="40%" r="60%">
-              <stop offset="0%" stopColor="#2c2f38" />
-              <stop offset="65%" stopColor="#15171e" />
-              <stop offset="100%" stopColor="#0a0b0e" />
-            </radialGradient>
-          </defs>
-
-          {/* Left Ear */}
-          <path
-            d="M 230 250 C 180 120, 150 40, 220 20 C 270 10, 280 120, 270 230 Z"
-            fill="url(#bunnyFur)"
-          />
-          {/* Right Ear */}
-          <path
-            d="M 370 250 C 420 120, 450 40, 380 20 C 330 10, 320 120, 330 230 Z"
-            fill="url(#bunnyFur)"
+        {/* Scaled Wrapper Matching Authentic Proportion */}
+        <div className="relative w-[1000px] sm:w-[1150px] aspect-[2880/1264] origin-bottom transform scale-[2.7] sm:scale-[2.95] translate-y-1 sm:translate-y-2 flex items-end justify-center pointer-events-none">
+          {/* Authentic Transparent Video Body */}
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
+            muted
+            loop
+            playsInline
+            autoPlay
+            preload="auto"
+            src="https://vida-web-assets.einsia.com/_astro/bunny-body-hevc-alpha.Cl1HdgWc.mov"
           />
 
-          {/* Devil Tail */}
-          <path
-            d="M 390 320 Q 480 280, 460 200 Q 450 170, 470 160"
-            fill="none"
-            stroke="#15171e"
-            strokeWidth="16"
-            strokeLinecap="round"
+          {/* 1:1 Canvas Overlay rendering glossy pupils inside the white eyeball spheres */}
+          <canvas
+            ref={canvasRef}
+            width={2880}
+            height={1264}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
           />
-          <polygon points="470,140 495,175 450,178" fill="#15171e" />
-
-          {/* Main Body Head */}
-          <ellipse cx="300" cy="350" rx="160" ry="130" fill="url(#bunnyFur)" />
-        </svg>
-
-        {/* Interactive Eye Tracking Canvas Overlay */}
-        <canvas
-          ref={canvasRef}
-          width={2880}
-          height={1264}
-          className="absolute bottom-0 w-full max-w-md h-full object-contain pointer-events-none z-20"
-        />
-
-        {/* Hover Cue Tag */}
-        <div className="absolute top-2 right-12 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-[10px] font-mono text-teal-300 border border-slate-700/60 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1 z-30">
-          <Eye className="w-3 h-3 text-teal-400" />
-          <span>Tracking cursor</span>
         </div>
       </div>
 
-      {/* Decorative Bottom Baseline Divider */}
-      <div className="w-full h-1 bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+      {/* Baseline Divider Line */}
+      <div className="w-full h-[1px] bg-slate-200"></div>
     </div>
   );
 }
