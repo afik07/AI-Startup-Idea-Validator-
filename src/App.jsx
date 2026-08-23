@@ -19,6 +19,7 @@ import { MvpFeatureView } from "./components/MvpFeatureView";
 import { GtmStrategyView } from "./components/GtmStrategyView";
 import { StartupAdvisorChat } from "./components/StartupAdvisorChat";
 import { ReportExportView } from "./components/ReportExportView";
+import { InteractiveMascotEyes } from "./components/InteractiveMascotEyes";
 import { AgentOrchestrator } from "./agents/agentOrchestrator";
 import { parseStartupDocumentOrImage } from "./agents/documentParserAgent";
 import { AGENT_STEPS } from "./agents/types";
@@ -531,6 +532,9 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* Interactive Cursor-Tracking Mascot Eyes (Located right below the Output) */}
+        <InteractiveMascotEyes report={report} />
       </main>
 
       {/* Modals */}
