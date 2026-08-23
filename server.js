@@ -7,9 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const TAVILY_API_KEY = process.env.TAVILY_API_KEY || "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";
+const TAVILY_API_KEY = process.env.TAVILY_API_KEY ;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-
+if (!TAVILY_API_KEY) {
+  console.error('❌ TAVILY_API_KEY is missing in .env file!');
+  process.exit(1);
+}
 if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_new_openrouter_key_here') {
   console.error('❌ OPENROUTER_API_KEY is missing in .env file!');
   process.exit(1);

@@ -1,8 +1,10 @@
+
+import 'dotenv/config';
 import fetch from 'node-fetch';
 
 async function runTavilySearch() {
     // Replace this with your actual Tavily API key from tavily.com
-    const TAVILY_API_KEY = "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"; 
+    const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
     
     // We are testing a complex IoT/ML pitch to see how the engine handles it
     const searchQuery = "Current market competitors and solutions for AI worker fatigue prediction systems using ESP32 hardware and machine learning";
