@@ -1,5 +1,6 @@
 // Agent 4: Comparison & Strategy Agent (Rival Comparison Matrix & Final Validation Scorecard)
 import { callOpenRouter } from "./openRouterClient.js";
+import { evaluateStartupIdea } from "./dynamicIdeaEvaluator.js";
 
 export async function runComparisonAgent({ idea, marketData, customerData, competitorData, options, logCallback }) {
   logCallback("Synthesizing full competitive comparison matrix, market gaps, and calculating overall Validation Scorecard...");
@@ -37,62 +38,57 @@ Return JSON ONLY matching this schema:
   const userPrompt = `Perform final validation and competitive strategy comparison for:
 Idea: ${idea.title}
 Domain: ${idea.domain}
-Description: ${idea.description}
+Description: ${idea.description || `${idea.problem} ${idea.solution}`}
 
 Market Summary: TAM $${marketData.tamVal}B, CAGR ${marketData.cagr}%, Score ${marketData.opportunityScore}/100.
 Customer Summary: ICP: ${customerData.icpSummary}, Pain Severity: ${customerData.painPointSeverity}/10, WTP: ${customerData.willingnessToPay}.
 Competitor Findings: Saturation: ${competitorData.marketSaturation}, Rivals Discovered: ${competitorData.competitors?.map((c) => c.name).join(", ")}.`;
 
   const fallbackFn = () => {
-    logCallback("Calculating composite score matrix and strategic verdict...");
+    logCallback("Calculating dynamic composite score matrix and strategic verdict...");
+    const evaluated = evaluateStartupIdea(idea);
     const rivals = competitorData.competitors || [];
     const rivalA = rivals[0]?.name || "Enterprise Competitor A";
     const rivalB = rivals[1]?.name || "Legacy Solution B";
 
-    const score = Math.round(
-      (marketData.opportunityScore * 0.3) +
-      (customerData.customerSegmentScore * 0.35) +
-      (customerData.painPointSeverity * 3.5)
-    );
-
-    const boundedScore = Math.min(Math.max(score, 68), 94);
-    const verdict = boundedScore >= 85 ? "STRONG GO" : boundedScore >= 75 ? "PROCEED WITH CAUTION" : "PIVOT RECOMMENDED";
+    const computedScore = evaluated.validationScore;
+    const verdict = evaluated.verdict;
 
     return {
-      validationScore: boundedScore,
+      validationScore: computedScore,
       verdict: verdict,
-      verdictSummary: `The idea demonstrates high market viability (${boundedScore}/100) due to acute customer pain and strong TAM growth, but requires clear positioning against established rivals like ${rivalA}.`,
+      verdictSummary: `The venture shows ${computedScore >= 80 ? "compelling commercial promise" : computedScore >= 65 ? "moderate viability requiring execution discipline" : "significant market risk"} (${computedScore}/100) based on acute customer pain and clear differentiation against ${rivalA}.`,
       featureMatrix: [
         {
-          featureName: "AI Workflow Automation",
+          featureName: evaluated.hasHardware ? "Real-Time Sensor Telemetry" : "Automated AI Intelligence",
           ourCapability: "Strong",
-          competitorAScore: "Full",
-          competitorBScore: "Partial",
+          competitorAScore: "Partial",
+          competitorBScore: "None",
           importanceToCustomer: "Critical"
         },
         {
-          featureName: "Affordable Micro-Pricing ($19-$199/mo)",
+          featureName: "Accessible Micro-Pricing ($19-$199/mo)",
           ourCapability: "Strong",
           competitorAScore: "None",
           competitorBScore: "Partial",
           importanceToCustomer: "Critical"
         },
         {
-          featureName: "Instant 5-Minute Onboarding",
+          featureName: "Instant 5-Minute Setup & Messaging Alerts",
           ourCapability: "Strong",
           competitorAScore: "None",
           competitorBScore: "Partial",
           importanceToCustomer: "High"
         },
         {
-          featureName: "Deep Ecosystem Integration (Slack/Email)",
+          featureName: "Deep Workflow Integration (WhatsApp/API)",
           ourCapability: "Strong",
           competitorAScore: "Partial",
           competitorBScore: "None",
           importanceToCustomer: "High"
         },
         {
-          featureName: "Enterprise Custom Legal SLA",
+          featureName: "Enterprise Custom SLA & Compliance",
           ourCapability: "Planned",
           competitorAScore: "Full",
           competitorBScore: "None",
@@ -100,13 +96,15 @@ Competitor Findings: Saturation: ${competitorData.marketSaturation}, Rivals Disc
         }
       ],
       marketGaps: [
-        "Underserved SMB and boutique practitioners priced out of enterprise solutions.",
-        "Lack of real-time multi-channel communication tracking in existing tools.",
-        "Overly complex onboarding requiring IT consultant setup."
+        `Underserved mid-market operators priced out of $10k+ enterprise solutions like ${rivalA}.`,
+        "Lack of real-time prescriptive mobile guidance in existing legacy desktop software.",
+        "Overly complex manual onboarding requiring specialized consultants."
       ],
-      uniqueValueProposition: `The fastest, most accessible AI solution tailored specifically for ${customerData.icpSummary}, delivering immediate ROI at 1/5th the enterprise cost.`,
-      defensibilityMoat: "Medium",
-      moatExplanation: "First-mover advantage in specialized micro-workflows combined with proprietary user interaction dataset lock-in.",
+      uniqueValueProposition: `The fastest, most accessible AI platform tailored for ${customerData.icpSummary}, delivering immediate ROI at 1/5th the traditional cost.`,
+      defensibilityMoat: evaluated.hasHardware ? "High" : evaluated.hasWorkflowLockIn ? "High" : "Medium",
+      moatExplanation: evaluated.hasHardware 
+        ? "Proprietary telemetry sensor datasets combined with continuous AI training creates a defensible predictive moat."
+        : "Deep workflow integration and proprietary user interaction datasets create high switching costs.",
       swotAnalysis: {
         strengths: [
           "Laser-focused ICP addressing acute daily operational friction",

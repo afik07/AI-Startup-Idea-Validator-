@@ -1,133 +1,167 @@
 import React from "react";
-import { TrendingUp, Users, Search, BarChart3, ShieldAlert, Layers, Rocket, Bot, Zap, Play, ArrowRight } from "lucide-react";
-import { AGENT_STEPS } from "../agents/types";
+import { TrendingUp, Users, Search, BarChart3, ShieldAlert, Layers, Rocket, Bot, Sparkles, ArrowRight, CheckCircle, Info, BookOpen } from "lucide-react";
 
-export function AgentRouterHub({ onLaunchAgent, onLaunchFullPipeline, isRunning }) {
-  const agentsCatalog = [
+export function AgentRouterHub() {
+  const agentSpecs = [
     {
-      id: AGENT_STEPS.MARKET,
-      title: "Market Opportunity Agent",
-      domain: "Industry & Size",
+      step: "01",
+      name: "Market Opportunity Agent",
+      pillar: "FINANCIAL SIZING & TAM",
       icon: TrendingUp,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50 border-indigo-100",
-      description: "Calculates TAM, SAM, SOM breakdown ($B/$M) and CAGR % growth velocity."
+      color: "blue",
+      badge: "Step 1 • Macro Economics",
+      description: "Calculates total addressable market (TAM $B), serviceable obtainable market (SOM $M), and CAGR % growth velocity using top-down & bottom-up models.",
+      inputs: "Pitch Brief & Target Geography",
+      outputs: "TAM/SAM/SOM, CAGR %, 5-Yr Growth Curve"
     },
     {
-      id: AGENT_STEPS.CUSTOMER,
-      title: "Customer Segmentation Agent",
-      domain: "Consumer & ICP",
+      step: "02",
+      name: "Customer Segmentation Agent",
+      pillar: "CONSUMER RESEARCH & ICP",
       icon: Users,
-      color: "text-purple-600",
-      bg: "bg-purple-50 border-purple-100",
-      description: "Identifies Ideal Customer Profiles (ICPs), personas, pain severity (1-10), and ARPU."
+      color: "purple",
+      badge: "Step 2 • Buyer Personas",
+      description: "Identifies Ideal Customer Profiles (ICPs), decision-maker personas, quantifies pain severity (1–10), Willingness-To-Pay, and estimated ARPU.",
+      inputs: "Market TAM & Value Proposition",
+      outputs: "ICP Summary, Pain Score, Target ACV"
     },
     {
-      id: AGENT_STEPS.COMPETITOR,
-      title: "Competitor Discovery Agent",
-      domain: "Tavily Web Search",
+      step: "03",
+      name: "Competitor Discovery Agent",
+      pillar: "TAVILY WEB SEARCH INTELLIGENCE",
       icon: Search,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50 border-emerald-100",
-      description: "Executes live web search via Tavily for direct/indirect rivals, pricing, and features."
+      color: "emerald",
+      badge: "Step 3 • Live Web Search",
+      description: "Scrapes Google & live web indices via Tavily API to identify direct/indirect competitors, active pricing tiers, feature parity, and market saturation.",
+      inputs: "Industry Domain & Core Keyword",
+      outputs: "Discovered Rivals, Pricing, Saturation"
     },
     {
-      id: AGENT_STEPS.COMPARISON,
-      title: "Strategic Comparison Agent",
-      domain: "Rival Feature Parity",
+      step: "04",
+      name: "Strategic Comparison Agent",
+      pillar: "SCORECARD & MOAT MATRIX",
       icon: BarChart3,
-      color: "text-amber-600",
-      bg: "bg-amber-50 border-amber-100",
-      description: "Builds feature comparison matrix, market gaps, UVP, and 0-100 Validation Score."
+      color: "amber",
+      badge: "Step 4 • Viability Verdict",
+      description: "Synthesizes competitive advantages, builds 2x2 positioning matrices, computes defensibility moats, and calculates the 0–100 Composite Viability Score.",
+      inputs: "Upstream Agent Findings",
+      outputs: "0–100 Viability Score, Official Verdict"
     },
     {
-      id: AGENT_STEPS.SWOT_RISK,
-      title: "SWOT & Risk Analysis Agent",
-      domain: "Risk Index & SWOT",
+      step: "05",
+      name: "SWOT & Risk Analysis Agent",
+      pillar: "QUANTITATIVE RISK MODELING",
       icon: ShieldAlert,
-      color: "text-rose-600",
-      bg: "bg-rose-50 border-rose-100",
-      description: "Generates 2x2 SWOT matrix and Risk Index scores across Competitor, Demand, and Regulatory factors."
+      color: "rose",
+      badge: "Step 5 • Risk Indices",
+      description: "Constructs 4-quadrant SWOT matrices and computes weighted risk indices across 4 categories: Competitor, Market Demand, Regulatory, and Execution.",
+      inputs: "Competitive Vulnerabilities & Headwinds",
+      outputs: "SWOT Matrix, Category Risk Indices"
     },
     {
-      id: AGENT_STEPS.MVP,
-      title: "MVP Feature Agent",
-      domain: "MoSCoW Prioritization",
+      step: "06",
+      name: "MVP Feature Roadmap Agent",
+      pillar: "MOSCOW SPRINT SPECIFICATION",
       icon: Layers,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50 border-indigo-100",
-      description: "Prioritizes features into Must Have, Should Have, Could Have, and Won't Have tiers."
+      color: "cyan",
+      badge: "Step 6 • Agile Roadmap",
+      description: "Prioritizes feature scope into Must-Have, Should-Have, Could-Have, and Won't-Have buckets, estimating time-to-market sprint duration in weeks.",
+      inputs: "Unaddressed Customer Pain Gaps",
+      outputs: "MoSCoW Specs, Build Timeline (Weeks)"
     },
     {
-      id: AGENT_STEPS.GTM,
-      title: "Go-To-Market Strategy Agent",
-      domain: "GTM Launch Playbook",
+      step: "07",
+      name: "Go-To-Market Strategy Agent",
+      pillar: "ACQUISITION & COMMERCIALIZATION",
       icon: Rocket,
-      color: "text-sky-600",
-      bg: "bg-sky-50 border-sky-100",
-      description: "Formulates positioning statement, acquisition playbook, and a 90-day step-by-step launch timeline."
+      color: "fuchsia",
+      badge: "Step 7 • GTM Playbook",
+      description: "Formulates Geoffrey Moore positioning statements, zero-to-one 'First 100 Customers' playbooks, and 90-day phased launch roadmaps.",
+      inputs: "Target Channels & Unit Economics",
+      outputs: "Positioning Statement, 90-Day Milestones"
     },
     {
-      id: "advisor",
-      title: "Conversational AI Advisor",
-      domain: "KB Ingestion Chatbot",
+      step: "08",
+      name: "Conversational AI Advisor",
+      pillar: "CHATGPT CO-PILOT WITH MEMORY",
       icon: Bot,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50 border-emerald-100",
-      description: "Interactive AI Chatbot ingesting the full validation knowledge base for follow-up strategy advice."
+      color: "teal",
+      badge: "Step 8 • Milestone 4 Ingestion",
+      description: "Ingests the entire multi-agent due diligence audit into conversational memory to answer strategic questions (cold emails, pitch decks, CAC/LTV math).",
+      inputs: "Full Audit Knowledge Base",
+      outputs: "Multi-Turn VC Advisory & Cold Copy"
     }
   ];
 
   return (
-    <div className="gamma-card p-6 sm:p-8 space-y-6 max-w-6xl mx-auto text-left">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+    <div className="gamma-card p-6 sm:p-8 space-y-8 animate-fade-in text-left">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">
-            <Zap className="w-4 h-4 text-slate-900" />
-            GAMMAVAL™ DIRECT AGENT LAUNCHER & ROUTER
+            <BookOpen className="w-4 h-4 text-indigo-600" />
+            MULTI-AGENT SYSTEM SPECIFICATION & ARCHITECTURE GUIDE
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 tracking-tight">
-            Autonomous Startup Validation Suite
+            How the 8-Agent Autonomous Due Diligence Suite Works
           </h3>
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
+            Sequential Context Propagation Architecture: Each specialized agent informs the next to deliver investor-grade validation
+          </p>
         </div>
 
-        <button
-          onClick={onLaunchFullPipeline}
-          disabled={isRunning}
-          className="px-5 py-2.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-        >
-          <Play className="w-3.5 h-3.5 fill-white" />
-          <span>Run Full 7-Agent Validation Pipeline</span>
-        </button>
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-800">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <span>8 SPECIALIZED AI AGENTS</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {agentsCatalog.map((agent) => {
-          const IconComp = agent.icon;
+      {/* 8 Agent Specification Guide Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {agentSpecs.map((agent) => {
+          const Icon = agent.icon;
           return (
             <div
-              key={agent.id}
-              onClick={() => onLaunchAgent(agent.id)}
-              className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all duration-300 space-y-3 cursor-pointer group flex flex-col justify-between"
+              key={agent.step}
+              className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-indigo-200 transition-all duration-200 space-y-3.5 flex flex-col justify-between"
             >
-              <div className="space-y-2">
+              <div className="space-y-2.5">
+                {/* Badge & Step */}
                 <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-xl border ${agent.bg}`}>
-                    <IconComp className={`w-4 h-4 ${agent.color}`} />
-                  </div>
-                  <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">{agent.domain}</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700">
+                    AGENT_{agent.step}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400 font-bold">
+                    {agent.pillar}
+                  </span>
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition">
-                  {agent.title}
-                </h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed font-medium line-clamp-2">
+
+                {/* Icon & Title */}
+                <div className="flex items-center gap-2.5 pt-1">
+                  <div className="p-2 rounded-xl bg-slate-950 text-white shadow-xs">
+                    <Icon className="w-4 h-4 text-indigo-400" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight leading-tight">
+                    {agent.name}
+                  </h4>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-slate-600 leading-relaxed font-sans">
                   {agent.description}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-700 font-bold group-hover:translate-x-1 transition-transform">
-                <span>Launch Agent</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-900" />
+              {/* Input / Output Tags */}
+              <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px] font-mono">
+                <div className="flex items-center justify-between text-slate-500">
+                  <span className="font-bold text-slate-400">INPUT:</span>
+                  <span className="text-slate-700 truncate max-w-[160px]">{agent.inputs}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-500">
+                  <span className="font-bold text-slate-400">OUTPUT:</span>
+                  <span className="text-indigo-600 font-bold truncate max-w-[160px]">{agent.outputs}</span>
+                </div>
               </div>
             </div>
           );

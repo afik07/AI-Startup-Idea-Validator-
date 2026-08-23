@@ -1,9 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { Header } from "./components/Header";
 import { AuthModal } from "./components/AuthModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
-import { DocsModal } from "./components/DocsModal";
+import { ArchitectureModal } from "./components/ArchitectureModal";
+import { SavedProjectsModal } from "./components/SavedProjectsModal";
 import { HeroConsole } from "./components/HeroConsole";
 import { AgentRouterHub } from "./components/AgentRouterHub";
 import { IdeaInputForm } from "./components/IdeaInputForm";
@@ -21,10 +22,11 @@ import { ReportExportView } from "./components/ReportExportView";
 import { AgentOrchestrator } from "./agents/agentOrchestrator";
 import { parseStartupDocumentOrImage } from "./agents/documentParserAgent";
 import { AGENT_STEPS } from "./agents/types";
-import { Sparkles, BarChart3, Users, Search, TrendingUp, Download, ShieldAlert, Layers, Rocket, Bot } from "lucide-react";
+import { Sparkles, BarChart3, Users, Search, TrendingUp, Download, ShieldAlert, Layers, Rocket, Bot, Bookmark, CheckCircle2 } from "lucide-react";
 
 export default function App() {
   const agentsRef = useRef(null);
+  const stepperRef = useRef(null);
   const resultsRef = useRef(null);
 
   const [apiKeys, setApiKeys] = useState(() => {
@@ -46,10 +48,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [selectedModel, setSelectedModel] = useState("google/gemini-2.0-flash-001");
+  const [savedProjects, setSavedProjects] = useState(() => {
+    const saved = localStorage.getItem("gammaval_saved_projects");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  const [selectedModel, setSelectedModel] = useState("openai/gpt-4o-mini");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
-  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+  const [isArchitectureModalOpen, setIsArchitectureModalOpen] = useState(false);
+  const [isSavedProjectsModalOpen, setIsSavedProjectsModalOpen] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
@@ -60,11 +73,18 @@ export default function App() {
     [AGENT_STEPS.COMPARISON]: "pending",
     [AGENT_STEPS.SWOT_RISK]: "pending",
     [AGENT_STEPS.MVP]: "pending",
-    [AGENT_STEPS.GTM]: "pending"
+    [AGENT_STEPS.GTM]: "pending",
+    [AGENT_STEPS.ADVISOR]: "pending"
   });
   const [logs, setLogs] = useState([]);
   const [report, setReport] = useState(null);
   const [activeTab, setActiveTab] = useState("scorecard");
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const scrollToAgents = () => {
     if (agentsRef.current) {
@@ -72,19 +92,79 @@ export default function App() {
     }
   };
 
+  const scrollToStepper = () => {
+    setTimeout(() => {
+      if (stepperRef.current) {
+        stepperRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
   const handleLoginSuccess = (user) => {
     setUserSession(user);
     localStorage.setItem("gammaval_user_session", JSON.stringify(user));
+    showToast(`Welcome back, ${user.name}!`);
   };
 
   const handleLogout = () => {
     setUserSession(null);
     localStorage.removeItem("gammaval_user_session");
+    showToast("Signed out successfully.");
   };
 
   const handleSaveApiKeys = (keys) => {
     setApiKeys(keys);
     localStorage.setItem("gammaval_api_keys", JSON.stringify(keys));
+    showToast("API Keys saved securely!");
+  };
+
+  const handleSaveProject = (reportToSave) => {
+    if (!reportToSave) return;
+    const projectEntry = {
+      ...reportToSave,
+      id: reportToSave.id || `proj_${Date.now()}`,
+      savedAt: new Date().toLocaleString()
+    };
+
+    setSavedProjects((prev) => {
+      const existingIdx = prev.findIndex((p) => p.idea?.title === projectEntry.idea?.title);
+      let updated;
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = projectEntry;
+      } else {
+        updated = [projectEntry, ...prev];
+      }
+      localStorage.setItem("gammaval_saved_projects", JSON.stringify(updated));
+      return updated;
+    });
+
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.7 }
+    });
+    showToast(`Saved "${projectEntry.idea?.title}" to your Project Vault!`);
+  };
+
+  const handleDeleteProject = (projectId) => {
+    setSavedProjects((prev) => {
+      const updated = prev.filter((p, i) => p.id !== projectId && i !== projectId);
+      localStorage.setItem("gammaval_saved_projects", JSON.stringify(updated));
+      return updated;
+    });
+    showToast("Project removed from vault.");
+  };
+
+  const handleLoadProject = (project) => {
+    setReport(project);
+    setActiveTab("scorecard");
+    showToast(`Loaded audit: ${project.idea?.title}`);
+    setTimeout(() => {
+      if (resultsRef.current) {
+        resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 150);
   };
 
   const handleRunValidation = async (idea) => {
@@ -98,8 +178,11 @@ export default function App() {
       [AGENT_STEPS.COMPARISON]: "pending",
       [AGENT_STEPS.SWOT_RISK]: "pending",
       [AGENT_STEPS.MVP]: "pending",
-      [AGENT_STEPS.GTM]: "pending"
+      [AGENT_STEPS.GTM]: "pending",
+      [AGENT_STEPS.ADVISOR]: "pending"
     });
+
+    scrollToStepper();
 
     const orchestrator = new AgentOrchestrator({
       openRouterApiKey: apiKeys.openRouterApiKey,
@@ -108,25 +191,43 @@ export default function App() {
     });
 
     orchestrator.onEvent((type, data) => {
-      if (type === "agent_status") {
-        setStepStatuses((prev) => ({ ...prev, [data.step]: data.status }));
-        if (data.status === "running") setCurrentStep(data.step);
-      } else if (type === "agent_log") {
+      if (type === "agent_log") {
         setLogs((prev) => [...prev, data]);
-      } else if (type === "pipeline_complete") {
-        setReport(data);
-        setIsRunning(false);
-        setCurrentStep(null);
-        setActiveTab("scorecard");
-
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (type === "agent_start") {
+        setCurrentStep(data.step);
+        setStepStatuses((prev) => ({ ...prev, [data.step]: "running" }));
+      } else if (type === "agent_complete") {
+        setStepStatuses((prev) => ({ ...prev, [data.step]: "completed" }));
+      } else if (type === "agent_status") {
+        if (data.status === "running") {
+          setCurrentStep(data.step);
         }
+        setStepStatuses((prev) => ({ ...prev, [data.step]: data.status }));
+      } else if (type === "pipeline_complete") {
+        setIsRunning(false);
+        setReport(data);
+        setCurrentStep(null);
+        setStepStatuses({
+          [AGENT_STEPS.MARKET]: "completed",
+          [AGENT_STEPS.CUSTOMER]: "completed",
+          [AGENT_STEPS.COMPETITOR]: "completed",
+          [AGENT_STEPS.COMPARISON]: "completed",
+          [AGENT_STEPS.SWOT_RISK]: "completed",
+          [AGENT_STEPS.MVP]: "completed",
+          [AGENT_STEPS.GTM]: "completed",
+          [AGENT_STEPS.ADVISOR]: "completed"
+        });
 
-        if (data.comparison?.validationScore >= 80) {
+        setTimeout(() => {
+          if (resultsRef.current) {
+            resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 300);
+
+        if (data.comparison?.validationScore >= 75) {
           confetti({
-            particleCount: 90,
-            spread: 80,
+            particleCount: 80,
+            spread: 70,
             origin: { y: 0.6 }
           });
         }
@@ -149,6 +250,7 @@ export default function App() {
 
     if (attachedFile) {
       setIsRunning(true);
+      scrollToStepper();
       setLogs((prev) => [
         ...prev,
         {
@@ -166,7 +268,7 @@ export default function App() {
       ideaToValidate = {
         founderName: parsed.founderName || userSession?.name || "Founder",
         title: parsed.title || attachedFile.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-        domain: parsed.domain || "B2B SaaS / AI Tools",
+        domain: parsed.domain || "AgriTech / Precision Farming",
         description: `${parsed.problem} Solution: ${parsed.solution}`,
         problem: parsed.problem,
         solution: parsed.solution,
@@ -182,7 +284,7 @@ export default function App() {
       ideaToValidate = {
         founderName: userSession?.name || "Founder",
         title: cleanPrompt ? (cleanPrompt.length > 50 ? cleanPrompt.slice(0, 50) + "..." : cleanPrompt) : "Custom AI Startup Idea",
-        domain: "B2B SaaS / AI Tools",
+        domain: "AgriTech / Precision Farming",
         description: cleanPrompt || "An intelligent autonomous startup platform validated via multi-agent intelligence.",
         problem: cleanPrompt ? `Market friction and key challenges related to ${cleanPrompt}.` : "Founders struggle to validate demand, competitors, and market feasibility quickly.",
         solution: cleanPrompt ? `Specialized software platform built to solve ${cleanPrompt}.` : "Autonomous multi-agent system executing live due diligence in seconds.",
@@ -198,16 +300,29 @@ export default function App() {
     else if (actionType === "competitors") setActiveTab("competitors");
     else if (actionType === "mvp") setActiveTab("mvp");
     else if (actionType === "gtm") setActiveTab("gtm");
+    else if (actionType === "advisor") setActiveTab("advisor");
   };
+
+  const isCurrentReportSaved = report && savedProjects.some((p) => p.idea?.title === report.idea?.title);
 
   return (
     <div className="min-h-screen bg-[#fafafc] text-slate-900 font-sans selection:bg-slate-900 selection:text-white flex flex-col relative overflow-hidden">
-      {/* Header Navbar tailored to GammaVal AI */}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-slate-950 text-white text-xs font-bold shadow-2xl flex items-center gap-2 animate-fade-in border border-slate-800">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header Navbar */}
       <Header
         apiKeys={apiKeys}
         onOpenKeyModal={() => setIsKeyModalOpen(true)}
-        onOpenDocsModal={() => setIsDocsModalOpen(true)}
+        onOpenArchitectureModal={() => setIsArchitectureModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenSavedProjectsModal={() => setIsSavedProjectsModalOpen(true)}
+        savedProjectsCount={savedProjects.length}
         userSession={userSession}
         onLogout={handleLogout}
         onTriggerDownload={() => {
@@ -217,7 +332,7 @@ export default function App() {
         onScrollToAgents={scrollToAgents}
       />
 
-      {/* Hero Console with Black Mascot Doll on Left */}
+      {/* Hero Console */}
       <HeroConsole
         onTriggerPrompt={handleTriggerPromptAction}
         onOpenPitchModal={() => {
@@ -234,165 +349,186 @@ export default function App() {
           onSelectModel={setSelectedModel}
         />
 
-        {/* Direct Agent Router Catalog */}
+        {/* 8-Agent System Specification & Architecture Guide */}
         <div ref={agentsRef} className="scroll-mt-20">
-          <AgentRouterHub
-            onLaunchAgent={(agentId) => {
-              if (agentId === "advisor") {
-                setActiveTab("advisor");
-                if (resultsRef.current) resultsRef.current.scrollIntoView({ behavior: "smooth" });
-              } else {
-                handleTriggerPromptAction(agentId, "Direct Agent Launch Query");
-              }
-            }}
-            onLaunchFullPipeline={() => {
-              if (window.confirm("Enter custom idea details below or click OK to run live pipeline with current vision:")) {
-                handleTriggerPromptAction("general", "Custom Startup Idea");
-              }
-            }}
-            isRunning={isRunning}
-          />
+          <AgentRouterHub />
         </div>
 
-        {/* Stepper Telemetry Console during/after execution */}
-        {(isRunning || logs.length > 0) && (
-          <PipelineStepper
-            stepStatuses={stepStatuses}
-            logs={logs}
-            currentStep={currentStep}
-          />
-        )}
+        {/* Animated Stepper Telemetry Console during/after execution */}
+        <div ref={stepperRef} className="scroll-mt-20">
+          {(isRunning || logs.length > 0) && (
+            <PipelineStepper
+              stepStatuses={stepStatuses}
+              logs={logs}
+              currentStep={currentStep}
+            />
+          )}
+        </div>
 
-        {/* Validation Results Dashboard */}
+        {/* Validation Results Dashboard (Vibrant & Animated) */}
         {report && (
           <div ref={resultsRef} className="space-y-6 animate-fade-in scroll-mt-20">
-            {/* Results Navigation Bar */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 overflow-x-auto gap-2">
+            {/* Results Navigation Bar with Dynamic Colors */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 overflow-x-auto gap-2 scrollbar-thin">
               <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                {/* Scorecard Tab */}
                 <button
                   onClick={() => setActiveTab("scorecard")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "scorecard"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md ring-2 ring-indigo-500/30 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Scorecard & Verdict
+                  <Sparkles className={`w-3.5 h-3.5 ${activeTab === "scorecard" ? "text-indigo-400 animate-pulse" : "text-slate-400"}`} />
+                  <span>Scorecard & Verdict</span>
                 </button>
+
+                {/* Market Tab */}
                 <button
                   onClick={() => setActiveTab("market")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "market"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-blue-600 border border-slate-200 hover:border-blue-200"
                   }`}
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
-                  Market TAM/SAM/SOM
+                  <span>Market TAM/SAM/SOM</span>
                 </button>
+
+                {/* Customer Tab */}
                 <button
                   onClick={() => setActiveTab("customer")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "customer"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md shadow-purple-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-purple-600 border border-slate-200 hover:border-purple-200"
                   }`}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  Customer ICP
+                  <span>Customer ICP</span>
                 </button>
+
+                {/* Competitors Tab */}
                 <button
                   onClick={() => setActiveTab("competitors")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "competitors"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200"
                   }`}
                 >
                   <Search className="w-3.5 h-3.5" />
-                  Tavily Rivals
+                  <span>Tavily Rivals & 2x2</span>
                 </button>
+
+                {/* Feature Matrix Tab */}
                 <button
                   onClick={() => setActiveTab("comparison")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "comparison"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-amber-600 border border-slate-200 hover:border-amber-200"
                   }`}
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
-                  Feature Matrix
+                  <span>Feature Matrix</span>
                 </button>
+
+                {/* SWOT & Risk Tab */}
                 <button
                   onClick={() => setActiveTab("swotRisk")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "swotRisk"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-rose-600 to-red-700 text-white shadow-md shadow-rose-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200"
                   }`}
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />
-                  SWOT & Risk
+                  <span>SWOT & Risk</span>
                 </button>
+
+                {/* MoSCoW MVP Tab */}
                 <button
                   onClick={() => setActiveTab("mvp")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "mvp"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-cyan-600 border border-slate-200 hover:border-cyan-200"
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  MoSCoW MVP
+                  <span>MoSCoW MVP</span>
                 </button>
+
+                {/* GTM Plan Tab */}
                 <button
                   onClick={() => setActiveTab("gtm")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "gtm"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-fuchsia-600 to-pink-700 text-white shadow-md shadow-fuchsia-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-fuchsia-600 border border-slate-200 hover:border-fuchsia-200"
                   }`}
                 >
                   <Rocket className="w-3.5 h-3.5" />
-                  GTM Plan
+                  <span>GTM Plan</span>
                 </button>
+
+                {/* AI Advisor Chat Tab */}
                 <button
                   onClick={() => setActiveTab("advisor")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "advisor"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-teal-600 to-emerald-700 text-white shadow-md shadow-teal-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-teal-600 border border-slate-200 hover:border-teal-200"
                   }`}
                 >
-                  <Bot className="w-3.5 h-3.5" />
-                  AI Advisor Chat
+                  <Bot className="w-3.5 h-3.5 text-teal-400" />
+                  <span>AI Advisor Chat</span>
                 </button>
+
+                {/* Export Audit Tab */}
                 <button
                   onClick={() => setActiveTab("export")}
-                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     activeTab === "export"
-                      ? "bg-slate-800 text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-md shadow-indigo-500/25 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200"
                   }`}
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Export Audit
+                  <span>Export & PDF</span>
                 </button>
               </div>
             </div>
 
-            {/* Tab Views */}
-            {activeTab === "scorecard" && <ValidationScorecard report={report} />}
-            {activeTab === "market" && <MarketAnalysisView market={report.market} />}
-            {activeTab === "customer" && <CustomerSegmentationView customer={report.customer} />}
-            {activeTab === "competitors" && <CompetitorDiscoveryView competitors={report.competitors} />}
-            {activeTab === "comparison" && <ComparisonMatrixView comparison={report.comparison} competitors={report.competitors} />}
-            {activeTab === "swotRisk" && <SwotRiskView swotRisk={report.swotRisk} />}
-            {activeTab === "mvp" && <MvpFeatureView mvp={report.mvp} />}
-            {activeTab === "gtm" && <GtmStrategyView gtm={report.gtm} />}
-            {activeTab === "advisor" && <StartupAdvisorChat report={report} apiKeys={apiKeys} selectedModel={selectedModel} />}
-            {activeTab === "export" && <ReportExportView report={report} />}
+            {/* Tab Views with Fluid Transitions */}
+            <div className="transition-all duration-300">
+              {activeTab === "scorecard" && <ValidationScorecard report={report} />}
+              {activeTab === "market" && <MarketAnalysisView market={report.market} />}
+              {activeTab === "customer" && <CustomerSegmentationView customer={report.customer} />}
+              {activeTab === "competitors" && <CompetitorDiscoveryView competitors={report.competitors} />}
+              {activeTab === "comparison" && <ComparisonMatrixView comparison={report.comparison} competitors={report.competitors} />}
+              {activeTab === "swotRisk" && <SwotRiskView swotRisk={report.swotRisk} />}
+              {activeTab === "mvp" && <MvpFeatureView mvp={report.mvp} />}
+              {activeTab === "gtm" && <GtmStrategyView gtm={report.gtm} />}
+              {activeTab === "advisor" && (
+                <StartupAdvisorChat
+                  report={report}
+                  apiKeys={apiKeys}
+                  selectedModel={selectedModel}
+                  onSaveApiKeys={handleSaveApiKeys}
+                />
+              )}
+              {activeTab === "export" && (
+                <ReportExportView
+                  report={report}
+                  onSaveProject={handleSaveProject}
+                  isSaved={isCurrentReportSaved}
+                />
+              )}
+            </div>
           </div>
         )}
       </main>
@@ -411,14 +547,22 @@ export default function App() {
         onSaveApiKeys={handleSaveApiKeys}
       />
 
-      <DocsModal
-        isOpen={isDocsModalOpen}
-        onClose={() => setIsDocsModalOpen(false)}
+      <ArchitectureModal
+        isOpen={isArchitectureModalOpen}
+        onClose={() => setIsArchitectureModalOpen(false)}
+      />
+
+      <SavedProjectsModal
+        isOpen={isSavedProjectsModalOpen}
+        onClose={() => setIsSavedProjectsModalOpen(false)}
+        savedProjects={savedProjects}
+        onLoadProject={handleLoadProject}
+        onDeleteProject={handleDeleteProject}
       />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 py-8 text-center text-xs text-slate-500 font-mono relative z-10 bg-white">
-        <p>GammaVal™ AI • Multi-Agent Startup Idea Validator Engine</p>
+        <p>GammaVal™ AI • 8-Agent Autonomous Startup Validation Engine • MIT License</p>
       </footer>
     </div>
   );

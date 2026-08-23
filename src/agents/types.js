@@ -40,9 +40,9 @@ export const SAMPLE_PRESETS = [
 ];
 
 export const AVAILABLE_MODELS = [
-  { id: "google/gemini-2.0-flash-001", name: "Gemini 2.0 Flash (Recommended)", provider: "Google" },
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini (Recommended)", provider: "OpenAI" },
+  { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash (Free)", provider: "Google" },
   { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic" },
-  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI" },
   { id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B Instruct", provider: "Meta" }
 ];
 
@@ -53,5 +53,6 @@ export const AGENT_STEPS = {
   COMPARISON: "comparison_strategy",
   SWOT_RISK: "swot_risk",
   MVP: "mvp_recommendation",
-  GTM: "gtm_strategy"
+  GTM: "gtm_strategy",
+  ADVISOR: "startup_advisor"
 };

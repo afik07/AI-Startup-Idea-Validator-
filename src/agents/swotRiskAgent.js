@@ -1,5 +1,6 @@
 // Milestone 3 - Agent 5: SWOT & Risk Analysis Agent
 import { callOpenRouter } from "./openRouterClient.js";
+import { evaluateStartupIdea } from "./dynamicIdeaEvaluator.js";
 
 export async function runSwotRiskAgent({ idea, marketData, customerData, competitorData, options, logCallback }) {
   logCallback("Evaluating structured SWOT Matrix and calculating multi-dimensional Risk Metrics...");
@@ -42,47 +43,56 @@ Return JSON ONLY matching this schema:
   const userPrompt = `Perform SWOT and Risk Analysis for this startup idea:
 Title: ${idea.title}
 Domain: ${idea.domain}
-Description: ${idea.description}
+Description: ${idea.description || `${idea.problem} ${idea.solution}`}
 
 Market Info: TAM $${marketData.tamVal}B, CAGR ${marketData.cagr}%.
 Customer ICP: ${customerData.icpSummary}, WTP: ${customerData.willingnessToPay}.
 Competitors Discovered: ${competitorData.competitors?.map((c) => c.name).join(", ")}.`;
 
   const fallbackFn = () => {
-    logCallback("Generating domain-aligned SWOT & Risk assessment model...");
+    logCallback("Generating dynamic SWOT & Risk assessment model...");
+    const evaluated = evaluateStartupIdea(idea);
     const rivals = competitorData.competitors || [];
     const mainRival = rivals[0]?.name || "Enterprise Competitor";
+
+    const compRisk = evaluated.hasHardware ? 42 : rivals.length > 2 ? 65 : 48;
+    const demandRisk = Math.max(20, 100 - evaluated.validationScore);
+    const regRisk = evaluated.industry.includes("Health") ? 68 : evaluated.industry.includes("FinTech") ? 62 : 32;
+    const execRisk = evaluated.hasHardware ? 55 : 38;
+    const overallRisk = Math.round((compRisk + demandRisk + regRisk + execRisk) / 4);
 
     return {
       swot: {
         strengths: [
           {
-            title: "Specialized Niche Workflow Focus",
-            description: "Directly solves operational pain points for target users faster than generic enterprise software."
+            title: `Specialized ${evaluated.industry} Intelligence`,
+            description: `Solves acute daily operational friction faster than generic legacy tools like ${mainRival}.`
           },
           {
-            title: "Agile Unit Economics & Self-Serve Onboarding",
-            description: "Low-friction pricing model enables rapid user acquisition without lengthy sales cycles."
+            title: "Accessible Pricing & Fast Time-to-Value",
+            description: "Low-friction self-serve pricing enables rapid pilot adoption without lengthy sales cycles."
           }
         ],
         weaknesses: [
           {
             title: "Early-Stage Brand Awareness",
-            description: "Requires organic marketing pull to build trust against established legacy players like " + mainRival + "."
+            description: `Requires disciplined organic marketing to build customer trust against established players like ${mainRival}.`
           },
           {
-            title: "Dependence on Foundational AI APIs",
-            description: "Relies on external LLM model providers for core generative capabilities."
+            title: evaluated.hasHardware ? "Hardware Supply Chain Logistics" : "Dependence on Foundational AI APIs",
+            description: evaluated.hasHardware 
+              ? "Initial manufacturing lead times and sensor inventory financing."
+              : "Relies on cloud LLM gateways for core generative summaries."
           }
         ],
         opportunities: [
           {
             title: "Expansion into Adjacent Vertical Markets",
-            description: "Core automation engine can be adapted to neighboring industry verticals with minimal refactoring."
+            description: "Core automation engine can be adapted to neighboring industry workflows with minimal refactoring."
           },
           {
             title: "B2B Partnership & Integration Ecosystems",
-            description: "Strategic integrations with popular workflow tools create strong distribution leverage."
+            description: "Strategic partnerships with regional co-ops and software suites create strong distribution leverage."
           }
         ],
         threats: [
@@ -91,17 +101,17 @@ Competitors Discovered: ${competitorData.competitors?.map((c) => c.name).join(",
             description: "Established competitors adding simplified low-cost tiers to block user migration."
           },
           {
-            title: "Evolving Regulatory & Data Compliance Requirements",
-            description: "Emerging AI data privacy regulations requiring strict audit trails and local data residency."
+            title: "Evolving Regulatory & Data Compliance",
+            description: "Emerging data privacy regulations requiring strict audit trails and local data residency."
           }
         ]
       },
       riskScores: {
-        competitorRisk: rivals.length > 3 ? 65 : 45,
-        marketDemandRisk: 30,
-        regulatoryRisk: 40,
-        executionRisk: 35,
-        overallRiskIndex: 42
+        competitorRisk: compRisk,
+        marketDemandRisk: demandRisk,
+        regulatoryRisk: regRisk,
+        executionRisk: execRisk,
+        overallRiskIndex: overallRisk
       },
       riskMitigations: [
         {

@@ -49,3 +49,5 @@ export async function searchTavily({ apiKey, query, maxResults = 5, fallbackFn }
     return { results: [] };
   }
 }
+
+export const searchTavilyCompetitors = searchTavily;

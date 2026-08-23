@@ -1,5 +1,6 @@
 // Agent 1: Market Opportunity Agent (Industry & Addressable Market Evaluation)
 import { callOpenRouter } from "./openRouterClient.js";
+import { evaluateStartupIdea } from "./dynamicIdeaEvaluator.js";
 
 export async function runMarketOpportunityAgent({ idea, options, logCallback }) {
   logCallback("Evaluating global & regional industry metrics (TAM, SAM, SOM)...");
@@ -24,106 +25,35 @@ Return JSON ONLY matching this schema:
 Title: ${idea.title}
 Domain: ${idea.domain}
 Target Region: ${idea.region}
-Description: ${idea.description}
+Description: ${idea.description || `${idea.problem} ${idea.solution}`}
 Pricing Model: ${idea.pricingModel}`;
 
   const fallbackFn = () => {
-    logCallback("Applying domain-specific heuristic market models...");
-    const domainLower = idea.domain.toLowerCase();
-    
-    if (domainLower.includes("legal") || domainLower.includes("b2b")) {
-      return {
-        industryName: "B2B SaaS & LegalTech Compliance",
-        tamVal: 18.5,
-        samVal: 4.2,
-        somVal: 120,
-        cagr: 21.4,
-        marketStage: "Rapid Growth",
-        marketDrivers: [
-          "Rapid adoption of generative AI in document-intensive industries",
-          "Rising legal compliance audits and regulatory complexity",
-          "Solo and boutique law firms seeking cost parity with BigLaw"
-        ],
-        macroTailwinds: [
-          "Shift towards fixed-fee legal billing models demanding speed",
-          "Remote legal practice collaboration tools expansion"
-        ],
-        keyRisks: [
-          "Data privacy concerns around cloud LLM document processing",
-          "Liability risks for erroneous AI legal interpretation"
-        ],
-        opportunityScore: 84
-      };
-    } else if (domainLower.includes("health") || domainLower.includes("consumer")) {
-      return {
-        industryName: "Consumer HealthTech & Personalized Nutrition",
-        tamVal: 42.0,
-        samVal: 9.8,
-        somVal: 280,
-        cagr: 16.8,
-        marketStage: "Rapid Growth",
-        marketDrivers: [
-          "Surging consumer demand for preventative metabolic health",
-          "Widespread adoption of continuous glucose monitors (CGMs)",
-          "Proliferation of affordable direct-to-consumer lab testing"
-        ],
-        macroTailwinds: [
-          "Integration of AI health coaching with consumer wearables",
-          "Shift from reactive medicine to proactive longevity"
-        ],
-        keyRisks: [
-          "High user churn typical of consumer fitness apps",
-          "Medical device regulatory boundaries (FDA/CE compliance)"
-        ],
-        opportunityScore: 79
-      };
-    } else if (domainLower.includes("edtech") || domainLower.includes("kids")) {
-      return {
-        industryName: "Gamified EdTech & Kids AI Learning",
-        tamVal: 12.4,
-        samVal: 2.9,
-        somVal: 85,
-        cagr: 19.2,
-        marketStage: "Rapid Growth",
-        marketDrivers: [
-          "Parental demand for STEM literacy and early coding education",
-          "Advancement of interactive conversational AI tutors",
-          "Shift toward narrative-driven self-paced gamification"
-        ],
-        macroTailwinds: [
-          "Global shortage of primary school Computer Science educators",
-          "Increasing parental budget allocation for extra-curricular Tech skills"
-        ],
-        keyRisks: [
-          "COPPA / GDPR-K child data protection regulations",
-          "Maintaining child engagement beyond initial novelty"
-        ],
-        opportunityScore: 81
-      };
-    } else {
-      return {
-        industryName: "FinTech & Creator Economy Micro-Payments",
-        tamVal: 28.0,
-        samVal: 6.5,
-        somVal: 190,
-        cagr: 24.1,
-        marketStage: "Rapid Growth",
-        marketDrivers: [
-          "Explosive growth of independent freelancers & gig economy workers",
-          "High revenue leakage from unbilled informal micro-tasks",
-          "Demand for instant cross-border billing and automation"
-        ],
-        macroTailwinds: [
-          "Open Banking API adoption and real-time payment rails",
-          "Multi-channel client communication sprawl (Slack, WhatsApp, Email)"
-        ],
-        keyRisks: [
-          "Low fee margins requiring large scale distribution",
-          "Platform lock-in from traditional accounting suites (QuickBooks)"
-        ],
-        opportunityScore: 86
-      };
-    }
+    logCallback("Applying dynamic NLP industry heuristic models...");
+    const evaluated = evaluateStartupIdea(idea);
+
+    return {
+      industryName: evaluated.industry,
+      tamVal: evaluated.tamVal,
+      samVal: evaluated.samVal,
+      somVal: evaluated.somVal,
+      cagr: evaluated.cagr,
+      marketStage: evaluated.cagr > 20 ? "Rapid Growth" : "Emerging Scaling",
+      marketDrivers: [
+        `Accelerating enterprise and consumer adoption of ${evaluated.industry} tools`,
+        `High cost and slow legacy turnaround of manual alternative workflows`,
+        `Proliferation of real-time cloud data pipelines and automated intelligence`
+      ],
+      macroTailwinds: [
+        `Favorable regulatory incentives and digital infrastructure expansion in ${idea.region || "target markets"}`,
+        `Rising labor and operational overhead forcing efficiency gains`
+      ],
+      keyRisks: [
+        `Initial customer onboarding friction and behavioral change resistance`,
+        `Potential margin compression from underlying infrastructure costs`
+      ],
+      opportunityScore: evaluated.marketOpportunityScore
+    };
   };
 
   const result = await callOpenRouter({

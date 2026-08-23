@@ -1,186 +1,106 @@
-// Agent 3: Competitor Discovery Agent (Rivals Search & Tavily Web Search Integration)
-import { searchTavily } from "./tavilyClient.js";
+// Agent 3: Competitor Discovery Agent (Live Web Search & Domain Rival Extraction)
+import { searchTavilyCompetitors } from "./tavilyClient.js";
+import { evaluateStartupIdea } from "./dynamicIdeaEvaluator.js";
 import { callOpenRouter } from "./openRouterClient.js";
 
 export async function runCompetitorDiscoveryAgent({ idea, marketData, customerData, options, logCallback }) {
-  logCallback(`Executing Tavily web search for live competitor offerings in ${marketData.industryName}...`);
+  const evaluated = evaluateStartupIdea(idea);
+  logCallback(`Searching live web intelligence for "${idea.title}" in ${evaluated.industry}...`);
 
-  const searchQuery = `${idea.title} ${idea.domain} direct competitors solutions pricing features`;
-
-  const fallbackTavilyFn = (q) => {
-    logCallback(`Tavily fallback: Simulating web search hits for query "${q}"...`);
-    const domainLower = idea.domain.toLowerCase();
-
-    if (domainLower.includes("legal") || domainLower.includes("b2b")) {
-      return {
-        answer: "Top competitors in AI legal document audit include Casetext (CoCounsel), Harvey AI, and Lexion.",
-        results: [
-          {
-            title: "Casetext CoCounsel - AI Legal Assistant",
-            url: "https://casetext.com/cocounsel",
-            snippet: "CoCounsel by Casetext performs document review, legal research, and contract analysis using fine-tuned GPT models specifically for law firms."
-          },
-          {
-            title: "Harvey AI - Legal Intelligence Platform",
-            url: "https://harvey.ai",
-            snippet: "Harvey AI provides enterprise legal artificial intelligence for elite BigLaw firms and corporate legal departments, backed by OpenAI Startup Fund."
-          },
-          {
-            title: "Lexion - Smart Contract Management & AI Audit",
-            url: "https://lexion.ai",
-            snippet: "Lexion is an AI-powered contract management system that automates intakes, repository tagging, and risk compliance audits."
-          },
-          {
-            title: "Robin AI - AI Contract Editing & Review",
-            url: "https://robinai.com",
-            snippet: "Robin AI combines legal AI with human-in-the-loop review to edit contracts 80% faster for mid-market legal teams."
-          }
-        ]
-      };
-    } else if (domainLower.includes("health") || domainLower.includes("consumer")) {
-      return {
-        answer: "Key players in personalized AI health & nutrition include Nutrisense, Levels Health, and Zoe Science.",
-        results: [
-          {
-            title: "Nutrisense - CGM & Personalized Nutrition",
-            url: "https://nutrisense.io",
-            snippet: "Nutrisense pairs Continuous Glucose Monitors (CGM) with registered dietitians and AI insights to track blood sugar responses."
-          },
-          {
-            title: "Levels Health - Metabolic Health Tracker",
-            url: "https://levelshealth.com",
-            snippet: "Levels helps users optimize metabolic health by providing real-time biofeedback on bio-metrics, meals, and exercise."
-          },
-          {
-            title: "Zoe Science & Nutrition - Personalized Gut & Metabolic AI",
-            url: "https://zoe.com",
-            snippet: "Zoe analyzes gut microbiome, blood fat, and sugar responses to recommend personalized food scores via mobile app."
-          }
-        ]
-      };
-    } else if (domainLower.includes("edtech") || domainLower.includes("kids")) {
-      return {
-        answer: "Leading competitors in AI coding for kids include Tynker AI, CodeMonkey, and Replit Kids.",
-        results: [
-          {
-            title: "Tynker - Coding for Kids & AI Games",
-            url: "https://tynker.com",
-            snippet: "Tynker offers block-to-text coding courses for kids with interactive puzzles and game design modules."
-          },
-          {
-            title: "CodeMonkey - Award-Winning Coding for Kids",
-            url: "https://codemonkey.com",
-            snippet: "CodeMonkey teaches Python and block coding through monkey game puzzles tailored for K-8 students."
-          },
-          {
-            title: "Synthesis AI - Problem Solving & STEM for Children",
-            url: "https://synthesis.is",
-            snippet: "Synthesis provides AI-driven problem-solving simulations and collaborative STEM challenges for kids."
-          }
-        ]
-      };
-    } else {
-      return {
-        answer: "Top competitors in micro-invoicing & freelancer billing include Harvest, Bonsai, and Invoice2go.",
-        results: [
-          {
-            title: "Hello Bonsai - All-in-One Freelance Software",
-            url: "https://hellobonsai.com",
-            snippet: "Bonsai manages freelance contracts, time tracking, proposal generation, and automated client invoicing."
-          },
-          {
-            title: "Harvest - Time Tracking & Invoicing App",
-            url: "https://getharvest.com",
-            snippet: "Harvest makes time tracking and client invoicing seamless with team budget monitoring integrations."
-          },
-          {
-            title: "Toggl Track & Invoice",
-            url: "https://toggl.com",
-            snippet: "Toggl provides effortless time tracking across browser extensions and instant billable client report export."
-          }
-        ]
-      };
-    }
-  };
-
-  // Perform live web search
-  const searchOutput = await searchTavily({
-    apiKey: options.tavilyApiKey,
-    query: searchQuery,
-    maxResults: 4,
-    fallbackFn: fallbackTavilyFn
-  });
-
-  logCallback(`Tavily web search returned ${searchOutput.results.length} competitor sources. Synthesizing competitive findings...`);
-
-  // Synthesize findings using OpenRouter LLM
-  const systemPrompt = `You are a Competitive Intelligence Analyst.
-Analyze web search findings and extract structured competitor details.
-Return JSON ONLY matching this schema:
-{
-  "marketSaturation": "Low" | "Moderate" | "High" | "Extremely Concentrated",
-  "competitors": [
-    {
-      "name": "string",
-      "websiteUrl": "string",
-      "targetTier": "Enterprise" | "Mid-Market" | "SMB" | "Consumer",
-      "estimatedPricing": "string",
-      "keyFeatures": ["string"],
-      "primaryMoat": "string",
-      "keyWeaknesses": ["string"]
-    }
-  ],
-  "competitorDiscoverySummary": "string"
-}`;
-
-  const userPrompt = `Synthesize these live web search results for the startup idea:
-Idea: ${idea.title}
-Domain: ${idea.domain}
-Target Audience: ${idea.targetAudience}
-
-Web Search Results:
-${searchOutput.results.map((r) => `- ${r.title} (${r.url}): ${r.snippet}`).join("\n")}
-Web Search Answer Summary: ${searchOutput.answer}`;
-
-  const fallbackSynthesizerFn = () => {
+  const fallbackFn = () => {
+    logCallback(`Mapping dynamic competitive landscape for ${evaluated.industry}...`);
     return {
-      marketSaturation: searchOutput.results.length > 3 ? "Moderate" : "Low",
-      competitorDiscoverySummary: `Discovered ${searchOutput.results.length} active players. Market shows high enterprise focus, leaving boutique SMBs underserved.`,
-      competitors: searchOutput.results.map((r, i) => {
-        const nameClean = r.title.split("-")[0].split("|")[0].trim();
-        return {
-          name: nameClean,
-          websiteUrl: r.url,
-          targetTier: i === 0 ? "Enterprise" : i === 1 ? "Mid-Market" : "SMB",
-          estimatedPricing: i === 0 ? "$1,000+/mo (Custom)" : i === 1 ? "$99/mo" : "$19-$49/mo",
-          keyFeatures: [
-            "Contract review & clause library",
-            "AI automated risk flags",
-            "Export audit reports"
-          ],
-          primaryMoat: i === 0 ? "High Brand Reputation & Legal Data Rights" : "First-Mover Integrations",
-          keyWeaknesses: [
-            "Prohibitive pricing for sole attorneys",
-            "Complex setup required",
-            "Lack of micro-task workflow focus"
-          ]
-        };
-      })
+      marketSaturation: evaluated.validationScore > 80 ? "Moderate (Fragmented)" : "High (Established Incumbents)",
+      competitors: evaluated.defaultCompetitors,
+      searchQueryUsed: `${idea.title} ${evaluated.industry} competitors products`
     };
   };
 
-  const synthesized = await callOpenRouter({
-    apiKey: options.openRouterApiKey,
-    model: options.model,
-    prompt: userPrompt,
-    systemPrompt,
-    fallbackFn: fallbackSynthesizerFn
-  });
+  // 1. If LLM API Key is provided, use LLM to discover accurate domain competitors
+  if (options.openRouterApiKey && options.openRouterApiKey.trim() !== "") {
+    try {
+      logCallback(`Querying LLM Reasoning Engine for direct competitors to "${idea.title}"...`);
+      const systemPrompt = `You are a venture capital competitor discovery agent.
+Analyze the following startup idea and list 3 to 4 REAL-WORLD existing competitors, legacy incumbents, or direct commercial alternatives in the exact same domain.
 
-  logCallback(`Competitor Discovery Agent complete. Evaluated ${synthesizerCompetitorCount(synthesized)} rivals.`);
-  return synthesized;
-}
+Startup Details:
+- Title: ${idea.title}
+- Industry: ${evaluated.industry}
+- Problem: ${idea.problem || idea.description}
+- Solution: ${idea.solution || idea.description}
 
-function synthesizerCompetitorCount(synth) {
-  return synth.competitors ? synth.competitors.length : 0;
+Output strictly a JSON object with this format:
+{
+  "marketSaturation": "Low" | "Moderate" | "High",
+  "competitors": [
+    {
+      "name": "Competitor Company Name (e.g. SmartCap, Seeing Machines, etc.)",
+      "websiteUrl": "https://competitor.com",
+      "estimatedPricing": "$99/mo or $1,200/unit",
+      "targetTier": "Enterprise / Mid-Market",
+      "primaryMoat": "Core moat (e.g. EEG brainwave sensors, optical gaze tracking)",
+      "coreOffer": "1-2 sentence description of what they sell."
+    }
+  ]
+}`;
+
+      const llmResult = await callOpenRouter({
+        apiKey: options.openRouterApiKey,
+        model: options.model || "openai/gpt-4o-mini",
+        prompt: `Identify the 3 biggest competitors for ${idea.title} (${evaluated.industry}).`,
+        systemPrompt,
+        fallbackFn
+      });
+
+      if (llmResult && llmResult.competitors && llmResult.competitors.length > 0) {
+        logCallback(`LLM successfully discovered ${llmResult.competitors.length} industry competitors.`);
+        return llmResult;
+      }
+    } catch (err) {
+      console.warn("LLM competitor discovery failed, attempting Tavily search / dynamic index:", err);
+    }
+  }
+
+  // 2. Tavily Live Web Search (if available)
+  if (options.tavilyApiKey && options.tavilyApiKey.trim() !== "") {
+    try {
+      const query = `"${idea.title}" OR "${evaluated.industry}" top products companies competitors pricing`;
+      const searchResults = await searchTavilyCompetitors({
+        apiKey: options.tavilyApiKey,
+        query,
+        maxResults: 4
+      });
+
+      if (searchResults && searchResults.results && searchResults.results.length > 0) {
+        // Filter out generic blog articles
+        const cleanResults = searchResults.results.filter(
+          (r) => !r.title?.toLowerCase().includes("best competitor analysis tools for b2b saas")
+        );
+
+        if (cleanResults.length > 0) {
+          const rivals = cleanResults.slice(0, 3).map((item, idx) => {
+            const snippet = item.content || item.snippet || item.title || "";
+            return {
+              name: item.title?.split("-")[0]?.split("|")[0]?.trim() || `Competitor ${idx + 1}`,
+              websiteUrl: item.url || "N/A",
+              estimatedPricing: "$150 - $1,500/unit",
+              targetTier: "Commercial & Fleet Operators",
+              primaryMoat: "Established Brand & Distribution",
+              coreOffer: snippet.length > 15 ? snippet.slice(0, 140) + "..." : "Commercial safety and telemetry monitoring solutions."
+            };
+          });
+
+          return {
+            marketSaturation: "Moderate",
+            competitors: rivals,
+            searchQueryUsed: query
+          };
+        }
+      }
+    } catch (err) {
+      console.warn("Tavily search error, falling back to dynamic index:", err);
+    }
+  }
+
+  return fallbackFn();
 }
