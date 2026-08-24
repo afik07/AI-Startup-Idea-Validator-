@@ -226,6 +226,12 @@ export default function App() {
             origin: { y: 0.6 }
           });
         }
+
+        setTimeout(() => {
+          if (resultsRef.current) {
+            resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 250);
       } else if (type === "pipeline_error") {
         setIsRunning(false);
         alert(`Validation Error: ${data.error}`);
