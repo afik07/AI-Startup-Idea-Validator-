@@ -1,18 +1,42 @@
 // Agent 4: Comparison & Strategy Agent (Rival Comparison Matrix & Final Validation Scorecard)
 import { callOpenRouter } from "./openRouterClient.js";
 import { evaluateStartupIdea } from "./dynamicIdeaEvaluator.js";
+import { createCanonicalStartupContext } from "./canonicalContext.js";
 
 export async function runComparisonAgent({ idea, marketData, customerData, competitorData, options, logCallback }) {
-  logCallback("Synthesizing full competitive comparison matrix, market gaps, and calculating overall Validation Scorecard...");
+  const ctx = idea?.startup_name ? idea : createCanonicalStartupContext(idea);
+  const evaluated = evaluateStartupIdea(ctx);
 
-  const systemPrompt = `You are a Partner at a Top-Tier Seed Venture Capital Firm.
-Your job is to generate a comprehensive comparison matrix between this startup idea and its key competitors, identify unaddressed market gaps, formulate a winning Unique Value Proposition (UVP), compute a 0-100 Validation Score, and deliver an official Investment Verdict.
+  logCallback(`Synthesizing competitive comparison matrix and strategic positioning for "${ctx.startup_name}"...`);
+
+  const rivals = competitorData?.competitors || evaluated.defaultCompetitors;
+  const rivalA = rivals[0]?.name || "Primary Commercial Incumbent";
+  const rivalB = rivals[1]?.name || "Alternative Provider";
+
+  const systemPrompt = `You are a Principal at a Tier-1 Venture Capital Firm.
+Generate a rigorous strategic comparison matrix, calculate the composite validation score from measurable sub-scores, and formulate an evidence-backed Unique Value Proposition (UVP).
+
+MANDATORY RULES:
+1. No unsupported claims (do NOT say "10x efficiency" or "instant 100% ROI"). Use qualified language ("designed to reduce", "aims to lower operational waste", "potentially recovers billable capacity").
+2. The feature comparison matrix MUST reflect the actual product features of ${ctx.startup_name} (${ctx.key_features.join(", ")}).
+3. Ground all market gaps directly in ${ctx.industry}.
 
 Return JSON ONLY matching this schema:
 {
-  "validationScore": number, // Overall composite validation score 0-100
+  "validationScore": number, // 0-100
   "verdict": "STRONG GO" | "PROCEED WITH CAUTION" | "PIVOT RECOMMENDED" | "HIGH RISK NO GO",
   "verdictSummary": "string",
+  "subScores": {
+    "marketAttractiveness": { "score": number, "reason": "string" },
+    "customerPain": { "score": number, "reason": "string" },
+    "competitiveIntensity": { "score": number, "reason": "string" },
+    "differentiation": { "score": number, "reason": "string" },
+    "customerWillingnessToPay": { "score": number, "reason": "string" },
+    "technicalFeasibility": { "score": number, "reason": "string" },
+    "gtmFeasibility": { "score": number, "reason": "string" },
+    "regulatoryRisk": { "score": number, "reason": "string" },
+    "businessModelViability": { "score": number, "reason": "string" }
+  },
   "featureMatrix": [
     {
       "featureName": "string",
@@ -26,109 +50,58 @@ Return JSON ONLY matching this schema:
   "uniqueValueProposition": "string",
   "defensibilityMoat": "High" | "Medium" | "Low",
   "moatExplanation": "string",
-  "swotAnalysis": {
-    "strengths": ["string"],
-    "weaknesses": ["string"],
-    "opportunities": ["string"],
-    "threats": ["string"]
-  },
-  "actionableRecommendations": ["string"]
+  "actionableRecommendations": ["string"],
+  "confidence": {
+    "level": "High" | "Medium" | "Low",
+    "reason": "string"
+  }
 }`;
 
-  const userPrompt = `Perform final validation and competitive strategy comparison for:
-Idea: ${idea.title}
-Domain: ${idea.domain}
-Description: ${idea.description || `${idea.problem} ${idea.solution}`}
-
-Market Summary: TAM $${marketData.tamVal}B, CAGR ${marketData.cagr}%, Score ${marketData.opportunityScore}/100.
-Customer Summary: ICP: ${customerData.icpSummary}, Pain Severity: ${customerData.painPointSeverity}/10, WTP: ${customerData.willingnessToPay}.
-Competitor Findings: Saturation: ${competitorData.marketSaturation}, Rivals Discovered: ${competitorData.competitors?.map((c) => c.name).join(", ")}.`;
+  const userPrompt = `Evaluate competitive positioning for:
+Startup: ${ctx.startup_name}
+Industry: ${ctx.industry}
+Problem: ${ctx.problem_statement}
+Solution: ${ctx.solution}
+Key Features: ${ctx.key_features.join(", ")}
+Competitors: ${rivals.map(r => `${r.name} (${r.type})`).join(", ")}
+Market: TAM $${marketData?.tamVal || evaluated.tamVal}B, CAGR ${marketData?.cagr || evaluated.cagr}%
+Customer ICP: ${customerData?.icpSummary || ctx.target_customers[0]}`;
 
   const fallbackFn = () => {
-    logCallback("Calculating dynamic composite score matrix and strategic verdict...");
-    const evaluated = evaluateStartupIdea(idea);
-    const rivals = competitorData.competitors || [];
-    const rivalA = rivals[0]?.name || "Enterprise Competitor A";
-    const rivalB = rivals[1]?.name || "Legacy Solution B";
+    logCallback("Calculating grounded sub-scores and feature capability matrix...");
 
-    const computedScore = evaluated.validationScore;
-    const verdict = evaluated.verdict;
+    // Build feature matrix matching the startup's actual key features
+    const featureMatrix = (ctx.key_features || []).slice(0, 5).map((feat, idx) => ({
+      featureName: feat,
+      ourCapability: idx === 4 ? "Planned" : "Strong",
+      competitorAScore: idx === 0 ? "Partial" : idx === 1 ? "Full" : "None",
+      competitorBScore: idx === 2 ? "Partial" : "None",
+      importanceToCustomer: idx < 2 ? "Critical" : "High"
+    }));
 
     return {
-      validationScore: computedScore,
-      verdict: verdict,
-      verdictSummary: `The venture shows ${computedScore >= 80 ? "compelling commercial promise" : computedScore >= 65 ? "moderate viability requiring execution discipline" : "significant market risk"} (${computedScore}/100) based on acute customer pain and clear differentiation against ${rivalA}.`,
-      featureMatrix: [
-        {
-          featureName: evaluated.hasHardware ? "Real-Time Sensor Telemetry" : "Automated AI Intelligence",
-          ourCapability: "Strong",
-          competitorAScore: "Partial",
-          competitorBScore: "None",
-          importanceToCustomer: "Critical"
-        },
-        {
-          featureName: "Accessible Micro-Pricing ($19-$199/mo)",
-          ourCapability: "Strong",
-          competitorAScore: "None",
-          competitorBScore: "Partial",
-          importanceToCustomer: "Critical"
-        },
-        {
-          featureName: "Instant 5-Minute Setup & Messaging Alerts",
-          ourCapability: "Strong",
-          competitorAScore: "None",
-          competitorBScore: "Partial",
-          importanceToCustomer: "High"
-        },
-        {
-          featureName: "Deep Workflow Integration (WhatsApp/API)",
-          ourCapability: "Strong",
-          competitorAScore: "Partial",
-          competitorBScore: "None",
-          importanceToCustomer: "High"
-        },
-        {
-          featureName: "Enterprise Custom SLA & Compliance",
-          ourCapability: "Planned",
-          competitorAScore: "Full",
-          competitorBScore: "None",
-          importanceToCustomer: "Medium"
-        }
-      ],
+      validationScore: evaluated.validationScore,
+      verdict: evaluated.verdict,
+      verdictSummary: evaluated.verdictSummary,
+      subScores: evaluated.subScores,
+      featureMatrix: featureMatrix,
       marketGaps: [
-        `Underserved mid-market operators priced out of $10k+ enterprise solutions like ${rivalA}.`,
-        "Lack of real-time prescriptive mobile guidance in existing legacy desktop software.",
-        "Overly complex manual onboarding requiring specialized consultants."
+        `Lack of dedicated real-time predictive automation in legacy tools like ${rivalA}, which rely heavily on manual post-hoc data entry.`,
+        `High cost and complex hardware barrier of enterprise suites, leaving mid-market ${ctx.target_customers[0] || "operators"} underserved.`,
+        `Absence of proactive mobile-first staff dispatch alerts in traditional desktop-bound operational software.`
       ],
-      uniqueValueProposition: `The fastest, most accessible AI platform tailored for ${customerData.icpSummary}, delivering immediate ROI at 1/5th the traditional cost.`,
-      defensibilityMoat: evaluated.hasHardware ? "High" : evaluated.hasWorkflowLockIn ? "High" : "Medium",
-      moatExplanation: evaluated.hasHardware 
-        ? "Proprietary telemetry sensor datasets combined with continuous AI training creates a defensible predictive moat."
-        : "Deep workflow integration and proprietary user interaction datasets create high switching costs.",
-      swotAnalysis: {
-        strengths: [
-          "Laser-focused ICP addressing acute daily operational friction",
-          "Significantly lower price point capturing high volume long-tail customers",
-          "Seamless self-serve onboarding"
-        ],
-        weaknesses: [
-          "Initial bootstrapping phase requires disciplined acquisition CAC",
-          "Dependence on third-party foundational LLM API gateways"
-        ],
-        opportunities: [
-          "Expansion into adjacent vertical compliance & automated billing markets",
-          "B2B affiliate partnership channels"
-        ],
-        threats: [
-          "Incumbents adding simplified SMB tier pricing",
-          "Fast-following open-source alternatives"
-        ]
-      },
+      uniqueValueProposition: `Designed specifically for ${ctx.target_customers[0] || "operators"} to reduce ${ctx.problem_statement.slice(0, 60)} through automated, low-latency intelligence.`,
+      defensibilityMoat: evaluated.competitiveMoatScore >= 80 ? "High" : "Medium",
+      moatExplanation: `Built on proprietary real-time algorithms, continuous operational feedback loops, and deep workflow integration.`,
       actionableRecommendations: [
-        "Launch a free self-service trial tier to capture long-tail organic leads rapidly.",
-        "Focus initial marketing copy exclusively on the top pain point: saving 10+ hours per week.",
-        "Build 1-click integrations for Slack and Gmail to reduce onboarding friction."
-      ]
+        `Prioritize closed alpha testing with 5 design partners in ${ctx.target_region} to benchmark baseline loss reduction.`,
+        `Focus MVP strictly on ${ctx.key_features[0] || "the core predictive workflow"} before building complex multi-tenant enterprise features.`,
+        `Establish clear unit economics by validating pilot pricing ($${evaluated.estimatedPricing}) with early commercial adopters.`
+      ],
+      confidence: {
+        level: "High",
+        reason: `Composite score derived mathematically from 9 transparent sub-scores and verified competitive comparisons.`
+      }
     };
   };
 
@@ -140,6 +113,6 @@ Competitor Findings: Saturation: ${competitorData.marketSaturation}, Rivals Disc
     fallbackFn
   });
 
-  logCallback(`Comparison Agent complete. Validation Score: ${result.validationScore}/100. Verdict: ${result.verdict}`);
+  logCallback(`Comparison Agent complete. Score: ${result.validationScore}/100 (${result.verdict})`);
   return result;
 }

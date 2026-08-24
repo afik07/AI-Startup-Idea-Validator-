@@ -1,4 +1,5 @@
-// Multi-Agent Pipeline Orchestrator with Step Timing & 8-Agent Execution Stream
+// Multi-Agent Pipeline Orchestrator with Step Timing, Canonical Context & Consistency Enforcement
+import { createCanonicalStartupContext } from "./canonicalContext.js";
 import { runMarketOpportunityAgent } from "./marketOpportunityAgent.js";
 import { runCustomerSegmentationAgent } from "./customerSegmentationAgent.js";
 import { runCompetitorDiscoveryAgent } from "./competitorDiscoveryAgent.js";
@@ -6,6 +7,7 @@ import { runComparisonAgent } from "./comparisonAgent.js";
 import { runSwotRiskAgent } from "./swotRiskAgent.js";
 import { runMvpRecommendationAgent } from "./mvpRecommendationAgent.js";
 import { runGtmStrategyAgent } from "./gtmStrategyAgent.js";
+import { runConsistencyValidationAgent } from "./consistencyValidationAgent.js";
 import { AGENT_STEPS } from "./types.js";
 
 export class AgentOrchestrator {
@@ -13,7 +15,7 @@ export class AgentOrchestrator {
     this.options = {
       openRouterApiKey: options.openRouterApiKey || "",
       tavilyApiKey: options.tavilyApiKey || "",
-      model: options.model || "google/gemini-2.0-flash-001"
+      model: options.model || "openai/gpt-4o-mini"
     };
     this.listeners = [];
   }
@@ -34,10 +36,21 @@ export class AgentOrchestrator {
 
   async runPipeline(idea) {
     const startTime = Date.now();
-    this.emit("pipeline_start", { idea, timestamp: new Date().toISOString() });
+
+    // 1. Establish the Single Source of Truth Canonical Startup Context
+    const startupContext = createCanonicalStartupContext(idea);
+    this.emit("pipeline_start", { startupContext, idea, timestamp: new Date().toISOString() });
 
     const context = {
-      idea,
+      startupContext,
+      idea: {
+        ...idea,
+        title: startupContext.startup_name,
+        domain: startupContext.industry,
+        problem: startupContext.problem_statement,
+        solution: startupContext.solution,
+        description: `${startupContext.problem_statement} Solution: ${startupContext.solution}`
+      },
       marketData: null,
       customerData: null,
       competitorData: null,
@@ -45,6 +58,7 @@ export class AgentOrchestrator {
       swotRiskData: null,
       mvpData: null,
       gtmData: null,
+      consistencyData: null,
       logs: []
     };
 
@@ -61,123 +75,139 @@ export class AgentOrchestrator {
     const stepDelay = (ms = 400) => new Promise((res) => setTimeout(res, ms));
 
     try {
+      addLog("orchestrator", `Established Canonical Startup Context for "${startupContext.startup_name}" in ${startupContext.industry}.`);
+
       // Step 1: Market Opportunity Agent
       this.emit("agent_start", { step: AGENT_STEPS.MARKET });
       this.emit("agent_status", { step: AGENT_STEPS.MARKET, status: "running" });
-      addLog(AGENT_STEPS.MARKET, "Starting Market Opportunity Agent analysis (TAM/SAM/SOM)...");
+      addLog(AGENT_STEPS.MARKET, `Evaluating global & regional industry metrics for ${startupContext.industry}...`);
       context.marketData = await runMarketOpportunityAgent({
-        idea,
+        idea: startupContext,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.MARKET, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.MARKET, data: context.marketData });
       this.emit("agent_status", { step: AGENT_STEPS.MARKET, status: "completed", data: context.marketData });
 
       // Step 2: Customer Segmentation Agent
       this.emit("agent_start", { step: AGENT_STEPS.CUSTOMER });
       this.emit("agent_status", { step: AGENT_STEPS.CUSTOMER, status: "running" });
-      addLog(AGENT_STEPS.CUSTOMER, "Starting Customer Segmentation Agent analysis (ICP & WTP)...");
+      addLog(AGENT_STEPS.CUSTOMER, `Profiling Ideal Customer Profile (${startupContext.target_customers[0] || "Target Buyers"})...`);
       context.customerData = await runCustomerSegmentationAgent({
-        idea,
+        idea: startupContext,
         marketData: context.marketData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.CUSTOMER, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.CUSTOMER, data: context.customerData });
       this.emit("agent_status", { step: AGENT_STEPS.CUSTOMER, status: "completed", data: context.customerData });
 
-      // Step 3: Competitor Discovery Agent (Tavily Live Web Search)
+      // Step 3: Competitor Discovery Agent (Verified Multi-Tier Discovery)
       this.emit("agent_start", { step: AGENT_STEPS.COMPETITOR });
       this.emit("agent_status", { step: AGENT_STEPS.COMPETITOR, status: "running" });
-      addLog(AGENT_STEPS.COMPETITOR, "Starting Competitor Discovery Agent (Live Web Search)...");
+      addLog(AGENT_STEPS.COMPETITOR, "Discovering & verifying real commercial competitors (Direct, Indirect, Substitutes)...");
       context.competitorData = await runCompetitorDiscoveryAgent({
-        idea,
+        idea: startupContext,
         marketData: context.marketData,
         customerData: context.customerData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.COMPETITOR, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.COMPETITOR, data: context.competitorData });
       this.emit("agent_status", { step: AGENT_STEPS.COMPETITOR, status: "completed", data: context.competitorData });
 
       // Step 4: Comparison & Strategy Agent
       this.emit("agent_start", { step: AGENT_STEPS.COMPARISON });
       this.emit("agent_status", { step: AGENT_STEPS.COMPARISON, status: "running" });
-      addLog(AGENT_STEPS.COMPARISON, "Starting Comparison & Strategy Agent matrix evaluation...");
+      addLog(AGENT_STEPS.COMPARISON, "Evaluating 2x2 positioning matrix and calculating 9 measurable sub-scores...");
       context.comparisonData = await runComparisonAgent({
-        idea,
+        idea: startupContext,
         marketData: context.marketData,
         customerData: context.customerData,
         competitorData: context.competitorData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.COMPARISON, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.COMPARISON, data: context.comparisonData });
       this.emit("agent_status", { step: AGENT_STEPS.COMPARISON, status: "completed", data: context.comparisonData });
 
-      // Step 5: SWOT & Risk Analysis Agent (Milestone 3)
+      // Step 5: SWOT & Risk Analysis Agent
       this.emit("agent_start", { step: AGENT_STEPS.SWOT_RISK });
       this.emit("agent_status", { step: AGENT_STEPS.SWOT_RISK, status: "running" });
-      addLog(AGENT_STEPS.SWOT_RISK, "Starting SWOT & Risk Analysis Agent evaluation...");
+      addLog(AGENT_STEPS.SWOT_RISK, "Constructing domain-grounded 2x2 SWOT Matrix & Quantitative Risk Breakdown...");
       context.swotRiskData = await runSwotRiskAgent({
-        idea,
+        idea: startupContext,
         marketData: context.marketData,
         customerData: context.customerData,
         competitorData: context.competitorData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.SWOT_RISK, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.SWOT_RISK, data: context.swotRiskData });
       this.emit("agent_status", { step: AGENT_STEPS.SWOT_RISK, status: "completed", data: context.swotRiskData });
 
-      // Step 6: MVP Feature Recommendation Agent (MoSCoW) (Milestone 3)
+      // Step 6: MVP Feature Recommendation Agent (MoSCoW)
       this.emit("agent_start", { step: AGENT_STEPS.MVP });
       this.emit("agent_status", { step: AGENT_STEPS.MVP, status: "running" });
-      addLog(AGENT_STEPS.MVP, "Starting MVP MoSCoW Feature Recommendation Agent...");
+      addLog(AGENT_STEPS.MVP, "Deriving product-specific MoSCoW MVP feature blueprint...");
       context.mvpData = await runMvpRecommendationAgent({
-        idea,
+        idea: startupContext,
         customerData: context.customerData,
         competitorData: context.competitorData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.MVP, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.MVP, data: context.mvpData });
       this.emit("agent_status", { step: AGENT_STEPS.MVP, status: "completed", data: context.mvpData });
 
-      // Step 7: Go-To-Market (GTM) Strategy Agent (Milestone 3)
+      // Step 7: Go-To-Market (GTM) Strategy Agent
       this.emit("agent_start", { step: AGENT_STEPS.GTM });
       this.emit("agent_status", { step: AGENT_STEPS.GTM, status: "running" });
-      addLog(AGENT_STEPS.GTM, "Starting Go-To-Market Strategy Agent roadmap generation...");
+      addLog(AGENT_STEPS.GTM, "Formulating ICP-specific acquisition channels & 90-day launch roadmap...");
       context.gtmData = await runGtmStrategyAgent({
-        idea,
+        idea: startupContext,
         customerData: context.customerData,
         competitorData: context.competitorData,
         options: this.options,
         logCallback: (msg) => addLog(AGENT_STEPS.GTM, msg)
       });
-      await stepDelay(450);
+      await stepDelay(400);
       this.emit("agent_complete", { step: AGENT_STEPS.GTM, data: context.gtmData });
       this.emit("agent_status", { step: AGENT_STEPS.GTM, status: "completed", data: context.gtmData });
 
-      // Step 8: Conversational AI Advisor Knowledge Base Ingestion Agent (Milestone 4)
+      // Step 8: Consistency Validation Agent & Advisor Knowledge Base Ingestion
       this.emit("agent_start", { step: AGENT_STEPS.ADVISOR });
       this.emit("agent_status", { step: AGENT_STEPS.ADVISOR, status: "running" });
-      addLog(AGENT_STEPS.ADVISOR, "Ingesting multi-agent audit data into Conversational ChatGPT Advisor Knowledge Base...");
-      await stepDelay(450);
-      this.emit("agent_complete", { step: AGENT_STEPS.ADVISOR });
+      addLog(AGENT_STEPS.ADVISOR, "Running Consistency Validation Agent & ingesting audit data into AI Advisor...");
+      
+      context.consistencyData = await runConsistencyValidationAgent({
+        idea: startupContext,
+        marketData: context.marketData,
+        customerData: context.customerData,
+        competitorData: context.competitorData,
+        comparisonData: context.comparisonData,
+        swotRiskData: context.swotRiskData,
+        mvpData: context.mvpData,
+        gtmData: context.gtmData,
+        logCallback: (msg) => addLog(AGENT_STEPS.ADVISOR, msg)
+      });
+
+      await stepDelay(400);
+      this.emit("agent_complete", { step: AGENT_STEPS.ADVISOR, data: context.consistencyData });
       this.emit("agent_status", { step: AGENT_STEPS.ADVISOR, status: "completed" });
 
       const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-      addLog("orchestrator", `8-Agent MAS Orchestration complete in ${durationSeconds}s. Knowledge Base ready.`);
+      addLog("orchestrator", `MAS Orchestration & Consistency Audit complete in ${durationSeconds}s. Report ready.`);
 
       const finalReport = {
-        idea,
+        idea: context.idea,
+        startupContext: startupContext,
         market: context.marketData,
         customer: context.customerData,
         competitors: context.competitorData,
@@ -185,6 +215,7 @@ export class AgentOrchestrator {
         swotRisk: context.swotRiskData,
         mvp: context.mvpData,
         gtm: context.gtmData,
+        consistencyAudit: context.consistencyData,
         durationSeconds,
         completedAt: new Date().toLocaleString(),
         logs: context.logs

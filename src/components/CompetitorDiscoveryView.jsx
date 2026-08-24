@@ -81,18 +81,18 @@ export function CompetitorDiscoveryView({ competitors }) {
             <span className="text-[9px] font-mono text-slate-400 mt-0.5">High Tech / High Cost</span>
           </div>
 
-          {/* Quadrant 3 (Bottom Left - Legacy Consulting / Labs) */}
+          {/* Quadrant 3 (Bottom Left - Legacy Consulting / Substitutes) */}
           <div className="absolute bottom-16 left-20 flex flex-col items-center">
             <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold shadow-2xs hover:scale-105 transition">
-              {competitors.competitors?.[1]?.name || "Traditional Labs"}
+              {competitors.competitors?.[3]?.name || competitors.competitors?.[1]?.name || "Manual Spreadsheets"}
             </div>
             <span className="text-[9px] font-mono text-slate-400 mt-0.5">Manual / Slow Turnaround</span>
           </div>
 
-          {/* Quadrant 4 (Bottom Right - Point Tools) */}
+          {/* Quadrant 4 (Bottom Right - Point Tools / Indirect) */}
           <div className="absolute bottom-14 right-20 flex flex-col items-center">
             <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold shadow-2xs hover:scale-105 transition">
-              {competitors.competitors?.[2]?.name || "Point Tools"}
+              {competitors.competitors?.[2]?.name || competitors.competitors?.[1]?.name || "Point Tools"}
             </div>
             <span className="text-[9px] font-mono text-slate-400 mt-0.5">Low Cost / Basic Features</span>
           </div>
@@ -106,21 +106,40 @@ export function CompetitorDiscoveryView({ competitors }) {
             key={idx}
             className="p-6 rounded-3xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 space-y-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-slate-900 text-base tracking-tight">{comp.name}</span>
-                {comp.websiteUrl && comp.websiteUrl !== "N/A" && (
-                  <a
-                    href={comp.websiteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3 gap-2">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-slate-900 text-base tracking-tight">{comp.name}</span>
+                  {comp.websiteUrl && comp.websiteUrl !== "N/A" && (
+                    <a
+                      href={comp.websiteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition"
+                      title="Open Verified Website"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+                {comp.type && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                      comp.type === "Direct" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                      comp.type === "Indirect" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                      comp.type === "Substitute" ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-purple-100 text-purple-800 border border-purple-200"
+                    }`}>
+                      {comp.type} Competitor
+                    </span>
+                    {comp.verified && (
+                      <span className="text-[9px] font-mono font-bold text-emerald-600 flex items-center gap-0.5">
+                        <CheckCircle2 className="w-3 h-3" /> Verified
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-              <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 shrink-0 text-right">
                 {comp.estimatedPricing || "$150/mo"}
               </span>
             </div>
@@ -128,16 +147,16 @@ export function CompetitorDiscoveryView({ competitors }) {
             <div className="space-y-3 text-xs text-slate-700 font-medium">
               <div>
                 <strong className="text-slate-900 font-bold block mb-1">Primary Value Proposition:</strong>
-                <p className="text-slate-600 leading-relaxed text-xs">{comp.coreOffer}</p>
+                <p className="text-slate-600 leading-relaxed text-xs">{comp.valueProposition || comp.coreOffer}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <span className="text-slate-400 font-mono font-bold block text-[9px]">TARGET TIER</span>
-                  <span className="font-bold text-slate-900">{comp.targetTier || "Mid-Enterprise"}</span>
+                  <span className="font-bold text-slate-900">{comp.targetCustomer || comp.targetTier || "Mid-Enterprise"}</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <span className="text-slate-400 font-mono font-bold block text-[9px]">PRIMARY MOAT</span>
-                  <span className="font-bold text-slate-900">{comp.primaryMoat || "Legacy Distribution"}</span>
+                  <span className="font-bold text-slate-900">{comp.primaryMoat || comp.competitiveAdvantage || "Legacy Distribution"}</span>
                 </div>
               </div>
             </div>
