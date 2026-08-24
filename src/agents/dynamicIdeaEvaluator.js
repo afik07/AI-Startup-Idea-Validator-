@@ -17,8 +17,67 @@ export function evaluateStartupIdea(idea) {
     { name: "Point Solution Co", estimatedPricing: "$99/mo", targetTier: "Mid-Market", primaryMoat: "Feature Focus", coreOffer: "Specialized modular operational tools." }
   ];
 
-  // A. Fatigue Monitoring, Worker Safety, Driver Alertness, Wearable Health
+  // A0. AI Security, LLM Guardrails, Prompt Injection, Agent Firewalls & Observability
   if (
+    title.includes("security") ||
+    title.includes("guard") ||
+    title.includes("patchguard") ||
+    desc.includes("prompt injection") ||
+    desc.includes("pii leakage") ||
+    desc.includes("sidecar") ||
+    desc.includes("guardrail") ||
+    desc.includes("red-teaming") ||
+    desc.includes("red teaming") ||
+    desc.includes("ai security") ||
+    desc.includes("llm security") ||
+    desc.includes("agent security") ||
+    desc.includes("firewall") ||
+    desc.includes("token cost") ||
+    domain.includes("security") ||
+    domain.includes("cyber") ||
+    domain.includes("guardrail")
+  ) {
+    industry = "Enterprise AI Security, LLM Guardrails & Autonomous Agent Observability";
+    baseTam = 36.8;
+    baseCagr = 38.4;
+    typicalPricing = "$1,500/mo - $6,000/mo per cluster + token volume tiering";
+    defaultCompetitors = [
+      {
+        name: "Lakera Guard",
+        websiteUrl: "https://lakera.ai",
+        estimatedPricing: "$2,500/mo Developer / Enterprise Custom",
+        targetTier: "Enterprise AI & App Security Teams",
+        primaryMoat: "Gandalf Global Threat Intelligence & Real-Time Prompt Firewall",
+        coreOffer: "Real-time API gateway detecting jailbreaks, prompt injection, and toxic outputs in sub-50ms."
+      },
+      {
+        name: "Aporia AI Guardrails",
+        websiteUrl: "https://aporia.com",
+        estimatedPricing: "$1,800/mo + Usage",
+        targetTier: "Production GenAI & Financial Services",
+        primaryMoat: "Sub-20ms Real-Time Hallucination & PII Interception",
+        coreOffer: "Streaming AI proxy providing PII masking, factual verification, and compliance policy enforcement."
+      },
+      {
+        name: "Palo Alto Networks (Prisma AIRM)",
+        websiteUrl: "https://paloaltonetworks.com",
+        estimatedPricing: "Enterprise Contract ($50k+/yr)",
+        targetTier: "Global 2000 & Fortune 500 CISOs",
+        primaryMoat: "Enterprise Security Operations Center (SOC) Ecosystem",
+        coreOffer: "Full-stack enterprise AI runtime security, model access management, and shadow AI discovery."
+      },
+      {
+        name: "Portkey.ai / Helicone AI Gateway",
+        websiteUrl: "https://portkey.ai",
+        estimatedPricing: "$99 - $999/mo",
+        targetTier: "AI Engineers & Scale-ups",
+        primaryMoat: "Multi-Model Fallback & Token Cost Optimization",
+        coreOffer: "AI routing control plane with latency monitoring, caching, budgets, and automated retries."
+      }
+    ];
+  }
+  // A. Fatigue Monitoring, Worker Safety, Driver Alertness, Wearable Health
+  else if (
     title.includes("fatigue") ||
     desc.includes("fatigue") ||
     desc.includes("driver") ||
