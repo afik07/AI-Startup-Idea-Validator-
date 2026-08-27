@@ -30,3 +30,6 @@ dist-ssr
 .vercel
 __pycache__/
 *.pyc
+
+# Local Netlify folder
+.netlify
